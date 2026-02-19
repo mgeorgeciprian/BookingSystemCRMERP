@@ -41,7 +41,7 @@ class EmployeeResponse(BaseModel):
     avatar_url: str | None
     role: str
     color: str
-    weekly_schedule: dict
+    weekly_schedule: dict | None = None
     commission_type: str
     commission_value: float | None
     is_active: bool

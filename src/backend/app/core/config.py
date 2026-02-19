@@ -26,10 +26,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 30
 
-    # Infobip (SMS / Viber / WhatsApp)
+    # Infobip (SMS / Viber / WhatsApp / Email)
     INFOBIP_BASE_URL: str = ""
     INFOBIP_API_KEY: str = ""
     INFOBIP_SENDER: str = "BookingCRM"
+    INFOBIP_EMAIL_SENDER: str = "noreply@bookingcrm.ro"  # Infobip email sender address
     NOTIFICATION_STRATEGY: str = "viber,whatsapp,sms"  # fallback order
 
     # e-Factura / ANAF

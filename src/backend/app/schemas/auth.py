@@ -1,6 +1,6 @@
 """Auth schemas -- registration, login, tokens."""
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, field_validator
 
 
 class RegisterRequest(BaseModel):
@@ -8,6 +8,13 @@ class RegisterRequest(BaseModel):
     password: str
     full_name: str
     phone: str | None = None
+
+    @field_validator("password")
+    @classmethod
+    def password_min_length(cls, v: str) -> str:
+        if len(v) < 6:
+            raise ValueError("Parola trebuie sa aiba minim 6 caractere")
+        return v
 
 
 class LoginRequest(BaseModel):

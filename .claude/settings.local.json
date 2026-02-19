@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm install:*)",
+      "Bash(npm run dev:*)",
+      "Bash(start:*)",
+      "Bash(docker-compose up:*)",
+      "Bash(docker info:*)",
+      "Bash(npx next build)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(pip install:*)",
+      "Bash(docker exec:*)",
+      "Bash(alembic revision:*)",
+      "Bash(PYTHONPATH=/c/BookingSystemCRMERP/src/backend alembic revision:*)",
+      "Bash(PYTHONPATH=/c/BookingSystemCRMERP/src/backend alembic upgrade:*)",
+      "Bash(curl:*)",
+      "Bash(docker compose build:*)",
+      "Bash(docker-compose build:*)",
+      "Bash(docker-compose:*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzcxNTA5NzQ2LCJ0eXBlIjoiYWNjZXNzIn0.VO3Z5PDAFqC55gPmJpuSHHSWrDgiIMI4rGVCXiwQzRk\")",
+      "Bash(REFRESH=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzc0MDk4MTQ2LCJ0eXBlIjoicmVmcmVzaCJ9.z6pucAZfDatduM9xDbNs7DotVOCCvPT7hPLlmNq312c\":*)",
+      "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzcxNTEwMDEzLCJ0eXBlIjoiYWNjZXNzIn0.baCQvSJpQOLLmYSTjyd1HsWVeJYFoSe_eqyEzbj0PqM\":*)",
+      "Bash(__NEW_LINE_7a9c3fe44ff87d6a__ curl -s -X POST http://localhost:5025/api/v1/businesses/1/invoices/ -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" -d '{:*)",
+      "Bash(git status:*)"
+    ]
+  }
+}

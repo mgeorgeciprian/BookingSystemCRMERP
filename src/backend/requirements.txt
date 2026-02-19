@@ -8,12 +8,10 @@ httpx==0.28.1
 sqlalchemy[asyncio]==2.0.36
 asyncpg==0.30.0
 alembic==1.14.0
-cloud-sql-python-connector[asyncpg]==1.14.0
 
 # Auth
 pyjwt[crypto]==2.10.1
 bcrypt==4.2.1
-passlib[bcrypt]==1.7.4
 
 # Validation & Serialization
 pydantic==2.10.3
@@ -26,20 +24,21 @@ redis[hiredis]==5.2.1
 # Celery (task queue for reminders)
 celery[redis]==5.4.0
 
-# Notifications (Infobip - Viber/WhatsApp/SMS)
-infobip-api-python-sdk==4.0.0
-
 # iCal parsing (Airbnb/Booking.com sync)
 icalendar==6.1.0
 recurring-ical-events==3.4.0
 
 # e-Factura XML generation
 lxml==5.3.0
-xmlsec==1.3.14
+# xmlsec==1.3.14  # Requires libxmlsec1-dev (Linux only, skip on Windows)
 
-# GCP
-google-cloud-storage==2.19.0
-google-cloud-tasks==2.17.0
+# PDF generation (invoices)
+weasyprint==62.3
+
+# GCP (only needed in production)
+# google-cloud-storage==2.19.0
+# google-cloud-tasks==2.17.0
+# cloud-sql-python-connector[asyncpg]==1.14.0
 
 # Utils
 python-dateutil==2.9.0

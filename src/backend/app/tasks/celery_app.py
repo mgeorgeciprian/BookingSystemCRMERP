@@ -11,6 +11,11 @@ celery_app = Celery(
     "bookingcrm",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
+    include=[
+        "app.tasks.reminders",
+        "app.tasks.ical_tasks",
+        "app.tasks.invoice_tasks",
+    ],
 )
 
 celery_app.conf.update(

@@ -52,7 +52,7 @@ async def create_employee(
     db: AsyncSession = Depends(get_db),
 ):
     await _get_owned_business(business_id, user, db)
-    emp = Employee(business_id=business_id, **body.model_dump())
+    emp = Employee(business_id=business_id, **body.model_dump(exclude_unset=True))
     db.add(emp)
     await db.flush()
     return emp

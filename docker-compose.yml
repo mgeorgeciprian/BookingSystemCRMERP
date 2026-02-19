@@ -35,12 +35,13 @@ services:
       context: .
       dockerfile: docker/Dockerfile.backend
     ports:
-      - "8000:8000"
+      - "5025:5025"
     environment:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db:5432/bookingcrm
       REDIS_URL: redis://redis:6379/0
       SECRET_KEY: dev-secret-change-in-production
       DEBUG: "true"
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:3001"]'
     depends_on:
       db:
         condition: service_healthy
@@ -48,7 +49,8 @@ services:
         condition: service_healthy
     volumes:
       - ./src/backend:/app
-    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    command: >
+      sh -c "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 5025 --reload"
 
   # Celery worker (reminders, iCal sync)
   celery-worker:
@@ -88,7 +90,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
+      NEXT_PUBLIC_API_URL: http://localhost:5025
     depends_on:
       - backend
     volumes:

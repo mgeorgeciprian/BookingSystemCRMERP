@@ -35,8 +35,8 @@ class Appointment(Base):
     employee_id: Mapped[int] = mapped_column(
         Integer, ForeignKey("employees.id", ondelete="CASCADE"), nullable=False
     )
-    service_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("services.id", ondelete="CASCADE"), nullable=False
+    service_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("services.id", ondelete="SET NULL"), nullable=True
     )
     client_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("clients.id", ondelete="SET NULL"), nullable=True
@@ -97,8 +97,8 @@ class Appointment(Base):
         Integer, ForeignKey("invoices.id", ondelete="SET NULL"), nullable=True
     )
 
-    # Metadata
-    metadata: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    # Extra data
+    extra_data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
 
     # Cancellation
     cancelled_at: Mapped[datetime | None] = mapped_column(
