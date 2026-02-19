@@ -7,6 +7,7 @@ import {
   employees as employeesApi,
   services as servicesApi,
   clients as clientsApi,
+  invoices as invoicesApi,
 } from "@/lib/api";
 import { ApiError } from "@/lib/api";
 import { useFetch } from "@/lib/hooks";
@@ -1094,20 +1095,36 @@ function AppointmentDetailModal({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [showPaymentSelect, setShowPaymentSelect] = useState(false);
+  const [invoiceGenerated, setInvoiceGenerated] = useState(false);
 
   const employeeData = employees.find((emp) => emp.id === appointment.employee_id);
   const employeeColor = employeeData?.color || "#6b7280";
 
-  const handleStatusChange = async (newStatus: string) => {
+  const handleStatusChange = async (newStatus: string, paymentMethod?: string) => {
     setErrorMessage(null);
     setActionInProgress(true);
     try {
-      await appointmentsApi.update(businessId, appointment.id, {
-        payment_status: newStatus === "completed" ? "paid" : undefined,
-      });
+      await appointmentsApi.changeStatus(businessId, appointment.id, newStatus, paymentMethod);
+      setShowPaymentSelect(false);
       onUpdated();
     } catch (caughtError: any) {
       setErrorMessage(caughtError.message || "Eroare la actualizare");
+    } finally {
+      setActionInProgress(false);
+    }
+  };
+
+  const handleGenerateInvoice = async () => {
+    setErrorMessage(null);
+    setActionInProgress(true);
+    try {
+      await invoicesApi.fromAppointment(businessId, {
+        appointment_id: appointment.id,
+      });
+      setInvoiceGenerated(true);
+    } catch (caughtError: any) {
+      setErrorMessage(caughtError.message || "Eroare la generarea facturii");
     } finally {
       setActionInProgress(false);
     }
@@ -1167,6 +1184,24 @@ function AppointmentDetailModal({
               </span>
             )}
           </div>
+
+          {/* Generate invoice button for completed appointments */}
+          {appointment.status === "completed" && !invoiceGenerated && (
+            <div>
+              <button
+                onClick={handleGenerateInvoice}
+                disabled={actionInProgress}
+                className="rounded-lg border border-brand-blue bg-blue-50 px-3 py-1.5 text-xs font-medium text-brand-blue hover:bg-blue-100 disabled:opacity-50"
+              >
+                Genereaza factura
+              </button>
+            </div>
+          )}
+          {invoiceGenerated && (
+            <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs font-medium text-green-700">
+              Factura a fost generata cu succes
+            </div>
+          )}
 
           {/* Info grid */}
           <div className="grid grid-cols-2 gap-4">
@@ -1283,22 +1318,56 @@ function AppointmentDetailModal({
                 </button>
               )}
               {appointment.status === "confirmed" && (
-                <button
-                  onClick={() => handleStatusChange("in_progress")}
-                  disabled={actionInProgress}
-                  className="rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                >
-                  Incepe
-                </button>
+                <>
+                  <button
+                    onClick={() => handleStatusChange("in_progress")}
+                    disabled={actionInProgress}
+                    className="rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                  >
+                    Incepe
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange("no_show")}
+                    disabled={actionInProgress}
+                    className="rounded-lg bg-orange-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-orange-600 disabled:opacity-50"
+                  >
+                    Neprezentare
+                  </button>
+                </>
               )}
-              {appointment.status === "in_progress" && (
+              {appointment.status === "in_progress" && !showPaymentSelect && (
                 <button
-                  onClick={() => handleStatusChange("completed")}
+                  onClick={() => setShowPaymentSelect(true)}
                   disabled={actionInProgress}
                   className="rounded-lg bg-green-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
                 >
                   Finalizeaza
                 </button>
+              )}
+              {showPaymentSelect && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">Metoda plata:</span>
+                  <button
+                    onClick={() => handleStatusChange("completed", "cash")}
+                    disabled={actionInProgress}
+                    className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                  >
+                    Cash
+                  </button>
+                  <button
+                    onClick={() => handleStatusChange("completed", "card")}
+                    disabled={actionInProgress}
+                    className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                  >
+                    Card
+                  </button>
+                  <button
+                    onClick={() => setShowPaymentSelect(false)}
+                    className="rounded-lg border px-2 py-1.5 text-xs text-gray-500 hover:bg-gray-100"
+                  >
+                    Inapoi
+                  </button>
+                </div>
               )}
               <button onClick={onClose} className="rounded-lg border px-4 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100">
                 Inchide

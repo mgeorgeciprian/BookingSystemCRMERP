@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppStore } from "@/lib/store";
-import { appointments as appointmentsApi, employees as employeesApi } from "@/lib/api";
+import { appointments as appointmentsApi, employees as employeesApi, dashboard as dashboardApi } from "@/lib/api";
 import { useFetch } from "@/lib/hooks";
 import {
   MOCK_APPOINTMENTS_TODAY,
@@ -49,8 +49,12 @@ export default function DashboardPage() {
     [businessId]
   );
 
-  // Use mock stats always for now (dashboard stats endpoint doesn't exist yet)
-  const s = MOCK_STATS;
+  const { data: statsData, isUsingMockData: statsUsingMock } = useFetch(
+    () => (businessId ? dashboardApi.stats(businessId) : Promise.resolve(null)),
+    MOCK_STATS,
+    [businessId]
+  );
+  const s = statsData || MOCK_STATS;
   const appointmentsList = todayAppointments || [];
   const employeesData = employeesList || [];
 
@@ -87,35 +91,26 @@ export default function DashboardPage() {
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Programari azi"
-          value={isUsingMockData ? s.today.appointments : appointmentsList.length}
-          sub={isUsingMockData
-            ? `${s.today.completed} finalizate, ${s.today.in_progress} in curs`
-            : `${appointmentsList.filter((a: any) => a.status === "completed").length} finalizate`
-          }
+          value={s.today?.appointments ?? appointmentsList.length}
+          sub={`${s.today?.completed ?? 0} finalizate, ${s.today?.in_progress ?? 0} in curs`}
           color="blue"
         />
         <StatCard
           label="Venit azi"
-          value={isUsingMockData
-            ? `${s.today.revenue_today.toLocaleString("ro-RO")} RON`
-            : `${appointmentsList.filter((a: any) => a.status === "completed").reduce((sum: number, a: any) => sum + (a.final_price || 0), 0).toLocaleString("ro-RO")} RON`
-          }
-          sub={isUsingMockData
-            ? `Estimat: ${s.today.revenue_expected.toLocaleString("ro-RO")} RON`
-            : `${appointmentsList.length} programari azi`
-          }
+          value={`${(s.today?.revenue_today ?? 0).toLocaleString("ro-RO")} RON`}
+          sub={`Estimat: ${(s.today?.revenue_expected ?? 0).toLocaleString("ro-RO")} RON`}
           color="green"
         />
         <StatCard
           label="Venit luna"
-          value={`${s.month.revenue.toLocaleString("ro-RO")} RON`}
-          sub={`Media/programare: ${s.month.avg_ticket.toFixed(0)} RON`}
+          value={`${(s.month?.revenue ?? 0).toLocaleString("ro-RO")} RON`}
+          sub={`Media/programare: ${(s.month?.avg_ticket ?? 0).toFixed(0)} RON`}
           color="purple"
         />
         <StatCard
           label="Rata ocupare"
-          value={`${s.month.occupancy_rate}%`}
-          sub={`${s.month.appointments} programari in luna`}
+          value={`${s.month?.occupancy_rate ?? 0}%`}
+          sub={`${s.month?.appointments ?? 0} programari in luna`}
           color="amber"
         />
       </div>
@@ -255,7 +250,7 @@ export default function DashboardPage() {
                 <div key={ch.channel} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="text-base">
-                      {ch.channel === "Viber" ? "💜" : ch.channel === "WhatsApp" ? "💚" : "📱"}
+                      {ch.channel === "Whatsapp" || ch.channel === "WhatsApp" ? "💚" : ch.channel === "Email" ? "📧" : ch.channel === "Viber" ? "💜" : "📱"}
                     </span>
                     <span className="text-sm text-gray-700">{ch.channel}</span>
                   </div>

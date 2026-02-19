@@ -26,7 +26,8 @@
       "Bash(git status:*)",
       "Bash(npm run build:*)",
       "Bash(powershell.exe -Command \"Get-PSDrive C | Select-Object Used,Free\")",
-      "Bash(wc:*)"
+      "Bash(wc:*)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\(''app/api/v1/dashboard.py''\\).read\\(\\)\\); print\\(''dashboard.py syntax OK''\\)\")"
     ]
   }
 }

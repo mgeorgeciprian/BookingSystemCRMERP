@@ -171,6 +171,13 @@ export const appointments = {
     const qs = new URLSearchParams(params).toString();
     return apiFetch<any>(`/api/v1/businesses/${bizId}/appointments/availability?${qs}`);
   },
+  changeStatus: (bizId: number, aptId: number, newStatus: string, paymentMethod?: string) => {
+    const statusParams = new URLSearchParams({ new_status: newStatus });
+    if (paymentMethod) statusParams.append("payment_method", paymentMethod);
+    return apiFetch<any>(`/api/v1/businesses/${bizId}/appointments/${aptId}/status?${statusParams}`, {
+      method: "POST",
+    });
+  },
 };
 
 // --- Public Booking (no auth) ---
@@ -206,6 +213,11 @@ export const invoices = {
       method: "POST",
       body: data ? JSON.stringify(data) : JSON.stringify({}),
     }),
+  fromAppointment: (bizId: number, data: { appointment_id: number; buyer_name?: string; buyer_cui?: string; buyer_address?: string; buyer_reg_com?: string; buyer_is_company?: boolean; notes?: string }) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/invoices/from-appointment`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 // --- Notifications ---
@@ -219,6 +231,12 @@ export const notifications = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+};
+
+// --- Dashboard ---
+export const dashboard = {
+  stats: (bizId: number) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/dashboard/`),
 };
 
 // --- iCal Sources ---
