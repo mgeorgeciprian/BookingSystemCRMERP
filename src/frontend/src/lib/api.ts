@@ -77,12 +77,26 @@ export const services = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+  update: (bizId: number, serviceId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/services/${serviceId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  delete: (bizId: number, serviceId: number) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/services/${serviceId}`, {
+      method: "DELETE",
+    }),
 };
 
 // --- Service Categories ---
 export const serviceCategories = {
   list: (bizId: number) =>
     apiFetch<any[]>(`/api/v1/businesses/${bizId}/services/categories`),
+  create: (bizId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/services/categories`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
 };
 
 // --- Employees ---
@@ -91,6 +105,20 @@ export const employees = {
     apiFetch<any[]>(`/api/v1/businesses/${bizId}/employees/`),
   create: (bizId: number, data: any) =>
     apiFetch<any>(`/api/v1/businesses/${bizId}/employees/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  update: (bizId: number, employeeId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/employees/${employeeId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
+  delete: (bizId: number, employeeId: number) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/employees/${employeeId}`, {
+      method: "DELETE",
+    }),
+  assignService: (bizId: number, employeeId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/employees/${employeeId}/services`, {
       method: "POST",
       body: JSON.stringify(data),
     }),
@@ -109,6 +137,11 @@ export const clients = {
     }),
   get: (bizId: number, clientId: number) =>
     apiFetch<any>(`/api/v1/businesses/${bizId}/clients/${clientId}`),
+  update: (bizId: number, clientId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/clients/${clientId}`, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    }),
   stats: (bizId: number) =>
     apiFetch<any>(`/api/v1/businesses/${bizId}/clients/stats/summary`),
 };
@@ -122,6 +155,11 @@ export const appointments = {
   create: (bizId: number, data: any) =>
     apiFetch<any>(`/api/v1/businesses/${bizId}/appointments/`, {
       method: "POST",
+      body: JSON.stringify(data),
+    }),
+  update: (bizId: number, aptId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/appointments/${aptId}`, {
+      method: "PATCH",
       body: JSON.stringify(data),
     }),
   cancel: (bizId: number, aptId: number, data: any) =>
@@ -163,9 +201,10 @@ export const invoices = {
       method: "POST",
       body: JSON.stringify(data),
     }),
-  markPaid: (bizId: number, invoiceId: number) =>
+  markPaid: (bizId: number, invoiceId: number, data?: any) =>
     apiFetch<any>(`/api/v1/businesses/${bizId}/invoices/${invoiceId}/mark-paid`, {
       method: "POST",
+      body: data ? JSON.stringify(data) : JSON.stringify({}),
     }),
 };
 
