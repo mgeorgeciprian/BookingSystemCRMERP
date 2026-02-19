@@ -17,7 +17,7 @@ Cloud CDN -> Cloud Load Balancer -> Cloud Run (Next.js SSR + FastAPI)
                                Cloud SQL PostgreSQL (Warsaw)
                                Cloud Memorystore Redis
                                Cloud Tasks + Cloud Scheduler
-                               Infobip (Viber/WhatsApp/SMS)
+                               Infobip (WhatsApp/SMS/Email)
 ```
 
 ## Key Patterns
@@ -28,7 +28,7 @@ Cloud CDN -> Cloud Load Balancer -> Cloud Run (Next.js SSR + FastAPI)
 - Auth store: Zustand with persist, localStorage key `bcr_token`
 - Multi-tenant: all entities scoped by `business_id`
 - Public booking: no auth, by business slug at `/api/v1/book/{slug}`
-- Notification strategy: Viber -> WhatsApp -> SMS (fallback order)
+- Notification strategy: WhatsApp -> SMS -> Email (fallback order, Viber not popular in RO)
 
 ## Key Files
 - **Backend entry**: `src/backend/app/main.py`
@@ -51,8 +51,8 @@ salon | dental | therapy | fitness | massage | tutor | medical | other
 - `/api/v1/businesses/{id}/services` — CRUD + categories
 - `/api/v1/businesses/{id}/employees` — CRUD + service assignments
 - `/api/v1/businesses/{id}/clients` — CRUD + search + stats
-- `/api/v1/businesses/{id}/appointments` — CRUD + availability + cancel
-- `/api/v1/businesses/{id}/invoices` — CRUD + mark-paid
+- `/api/v1/businesses/{id}/appointments` — CRUD + availability + cancel + status transitions
+- `/api/v1/businesses/{id}/invoices` — CRUD + mark-paid + auto-generate from appointment
 - `/api/v1/businesses/{id}/ical` — sources CRUD + manual sync
 - `/api/v1/businesses/{id}/notifications` — log + send
 - `/api/v1/book/{slug}` — public profile, services, employees, availability, book

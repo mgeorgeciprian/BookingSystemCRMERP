@@ -1,7 +1,7 @@
-"""Notification service -- Viber-first, WhatsApp fallback, SMS last resort.
+"""Notification service -- WhatsApp-first, SMS fallback, Email last resort.
 
 Uses Infobip API for all channels. Strategy: try channels in order of cost-effectiveness
-until one succeeds. Viber (~$0.02) -> WhatsApp (~$0.014) -> SMS (~$0.06).
+until one succeeds. WhatsApp (~$0.014) -> SMS (~$0.06) -> Email (free).
 
 Enhanced with:
 - Email sending via Infobip Email API (for invoice PDF delivery)

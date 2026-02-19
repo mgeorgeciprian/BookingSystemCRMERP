@@ -45,8 +45,8 @@ class Client(Base):
 
     # Notification preferences
     preferred_channel: Mapped[str] = mapped_column(
-        String(15), default="viber"
-    )  # viber | whatsapp | sms | email
+        String(15), default="whatsapp"
+    )  # whatsapp | sms | email | viber
     viber_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
     whatsapp_phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
     notifications_enabled: Mapped[bool] = mapped_column(Boolean, default=True)

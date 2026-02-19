@@ -23,7 +23,10 @@
       "Bash(REFRESH=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzc0MDk4MTQ2LCJ0eXBlIjoicmVmcmVzaCJ9.z6pucAZfDatduM9xDbNs7DotVOCCvPT7hPLlmNq312c\":*)",
       "Bash(TOKEN=\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZXhwIjoxNzcxNTEwMDEzLCJ0eXBlIjoiYWNjZXNzIn0.baCQvSJpQOLLmYSTjyd1HsWVeJYFoSe_eqyEzbj0PqM\":*)",
       "Bash(__NEW_LINE_7a9c3fe44ff87d6a__ curl -s -X POST http://localhost:5025/api/v1/businesses/1/invoices/ -H \"Authorization: Bearer $TOKEN\" -H \"Content-Type: application/json\" -d '{:*)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(npm run build:*)",
+      "Bash(powershell.exe -Command \"Get-PSDrive C | Select-Object Used,Free\")",
+      "Bash(wc:*)"
     ]
   }
 }

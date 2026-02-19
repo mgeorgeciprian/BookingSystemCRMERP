@@ -216,6 +216,50 @@ async def cancel_appointment(
     return apt
 
 
+@router.post("/{appointment_id}/status")
+async def update_appointment_status(
+    business_id: int,
+    appointment_id: int,
+    new_status: str = Query(..., description="New status: confirmed|in_progress|completed|no_show"),
+    payment_method: str | None = Query(None),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Transition appointment to a new status."""
+    await _get_owned_business(business_id, user, db)
+    result = await db.execute(
+        select(Appointment).where(
+            Appointment.id == appointment_id, Appointment.business_id == business_id
+        )
+    )
+    apt = result.scalar_one_or_none()
+    if not apt:
+        raise HTTPException(status_code=404, detail="Programare negasita")
+
+    valid_transitions = {
+        "pending": ["confirmed", "cancelled"],
+        "confirmed": ["in_progress", "cancelled", "no_show"],
+        "in_progress": ["completed", "cancelled"],
+    }
+    allowed = valid_transitions.get(apt.status, [])
+    if new_status not in allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Nu se poate trece din '{apt.status}' in '{new_status}'"
+        )
+
+    apt.status = new_status
+
+    # If completed, mark payment
+    if new_status == "completed":
+        apt.payment_status = "paid"
+        if payment_method:
+            apt.payment_method = payment_method
+
+    await db.flush()
+    return {"id": apt.id, "status": apt.status, "payment_status": apt.payment_status}
+
+
 @router.get("/availability", response_model=AvailabilityResponse)
 async def get_availability(
     business_id: int,

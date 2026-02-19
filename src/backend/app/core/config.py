@@ -31,7 +31,7 @@ class Settings(BaseSettings):
     INFOBIP_API_KEY: str = ""
     INFOBIP_SENDER: str = "BookingCRM"
     INFOBIP_EMAIL_SENDER: str = "noreply@bookingcrm.ro"  # Infobip email sender address
-    NOTIFICATION_STRATEGY: str = "viber,whatsapp,sms"  # fallback order
+    NOTIFICATION_STRATEGY: str = "whatsapp,sms,email"  # fallback order (RO: Viber not popular)
 
     # e-Factura / ANAF
     ANAF_OAUTH_CLIENT_ID: str = ""
