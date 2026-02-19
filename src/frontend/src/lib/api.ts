@@ -1,0 +1,151 @@
+/**
+ * API client for BookingCRM backend.
+ */
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+export async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("bcr_token") : null;
+
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  const res = await fetch(`${API_BASE}${path}`, {
+    ...options,
+    headers,
+  });
+
+  if (!res.ok) {
+    const error = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(error.detail || `API Error ${res.status}`);
+  }
+
+  if (res.status === 204) return {} as T;
+  return res.json();
+}
+
+// --- Auth ---
+export const auth = {
+  register: (data: { email: string; password: string; full_name: string; phone?: string }) =>
+    apiFetch<{ access_token: string; refresh_token: string }>("/api/v1/auth/register", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  login: (data: { email: string; password: string }) =>
+    apiFetch<{ access_token: string; refresh_token: string }>("/api/v1/auth/login", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  me: () => apiFetch<any>("/api/v1/auth/me"),
+};
+
+// --- Businesses ---
+export const businesses = {
+  list: () => apiFetch<any[]>("/api/v1/businesses/"),
+  create: (data: any) =>
+    apiFetch<any>("/api/v1/businesses/", { method: "POST", body: JSON.stringify(data) }),
+  get: (id: number) => apiFetch<any>(`/api/v1/businesses/${id}`),
+  update: (id: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+};
+
+// --- Services ---
+export const services = {
+  list: (bizId: number) =>
+    apiFetch<any[]>(`/api/v1/businesses/${bizId}/services/`),
+  create: (bizId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/services/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+
+// --- Employees ---
+export const employees = {
+  list: (bizId: number) =>
+    apiFetch<any[]>(`/api/v1/businesses/${bizId}/employees/`),
+  create: (bizId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/employees/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+
+// --- Clients ---
+export const clients = {
+  list: (bizId: number, params?: Record<string, string>) => {
+    const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+    return apiFetch<any[]>(`/api/v1/businesses/${bizId}/clients/${qs}`);
+  },
+  create: (bizId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/clients/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  get: (bizId: number, clientId: number) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/clients/${clientId}`),
+  stats: (bizId: number) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/clients/stats/summary`),
+};
+
+// --- Appointments ---
+export const appointments = {
+  list: (bizId: number, params?: Record<string, string>) => {
+    const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+    return apiFetch<any[]>(`/api/v1/businesses/${bizId}/appointments/${qs}`);
+  },
+  create: (bizId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/appointments/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  cancel: (bizId: number, aptId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/appointments/${aptId}/cancel`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  availability: (bizId: number, params: Record<string, string>) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch<any>(`/api/v1/businesses/${bizId}/appointments/availability?${qs}`);
+  },
+};
+
+// --- Public Booking (no auth) ---
+export const publicBooking = {
+  profile: (slug: string) => apiFetch<any>(`/api/v1/book/${slug}`),
+  services: (slug: string) => apiFetch<any[]>(`/api/v1/book/${slug}/services`),
+  employees: (slug: string, serviceId?: number) => {
+    const qs = serviceId ? `?service_id=${serviceId}` : "";
+    return apiFetch<any[]>(`/api/v1/book/${slug}/employees${qs}`);
+  },
+  availability: (slug: string, params: Record<string, string>) => {
+    const qs = new URLSearchParams(params).toString();
+    return apiFetch<any>(`/api/v1/book/${slug}/availability?${qs}`);
+  },
+  book: (slug: string, data: any) =>
+    apiFetch<any>(`/api/v1/book/${slug}/book`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+
+// --- Invoices ---
+export const invoices = {
+  list: (bizId: number) =>
+    apiFetch<any[]>(`/api/v1/businesses/${bizId}/invoices/`),
+  create: (bizId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/invoices/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
