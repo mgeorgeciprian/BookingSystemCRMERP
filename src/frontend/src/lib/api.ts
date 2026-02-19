@@ -2,7 +2,16 @@
  * API client for BookingCRM backend.
  */
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5025";
+
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+    this.name = "ApiError";
+  }
+}
 
 export async function apiFetch<T>(
   path: string,
@@ -27,7 +36,7 @@ export async function apiFetch<T>(
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ detail: res.statusText }));
-    throw new Error(error.detail || `API Error ${res.status}`);
+    throw new ApiError(error.detail || `API Error ${res.status}`, res.status);
   }
 
   if (res.status === 204) return {} as T;
@@ -68,6 +77,12 @@ export const services = {
       method: "POST",
       body: JSON.stringify(data),
     }),
+};
+
+// --- Service Categories ---
+export const serviceCategories = {
+  list: (bizId: number) =>
+    apiFetch<any[]>(`/api/v1/businesses/${bizId}/services/categories`),
 };
 
 // --- Employees ---
@@ -147,5 +162,37 @@ export const invoices = {
     apiFetch<any>(`/api/v1/businesses/${bizId}/invoices/`, {
       method: "POST",
       body: JSON.stringify(data),
+    }),
+  markPaid: (bizId: number, invoiceId: number) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/invoices/${invoiceId}/mark-paid`, {
+      method: "POST",
+    }),
+};
+
+// --- Notifications ---
+export const notifications = {
+  log: (bizId: number, params?: Record<string, string>) => {
+    const qs = params ? "?" + new URLSearchParams(params).toString() : "";
+    return apiFetch<any[]>(`/api/v1/businesses/${bizId}/notifications/log${qs}`);
+  },
+  send: (bizId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/notifications/send`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+};
+
+// --- iCal Sources ---
+export const icalSources = {
+  list: (bizId: number) =>
+    apiFetch<any[]>(`/api/v1/businesses/${bizId}/ical/`),
+  create: (bizId: number, data: any) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/ical/`, {
+      method: "POST",
+      body: JSON.stringify(data),
+    }),
+  sync: (bizId: number, sourceId: number) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/ical/${sourceId}/sync`, {
+      method: "POST",
     }),
 };

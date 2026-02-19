@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     GCS_PROJECT_ID: str = ""
 
     # CORS
-    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3001"]
+    CORS_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:3001", "http://localhost:5025"]
 
     # iCal sync interval (minutes)
     ICAL_SYNC_INTERVAL: int = 15

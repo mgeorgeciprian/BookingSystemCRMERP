@@ -1,39 +1,58 @@
 "use client";
 
+import { useAppStore } from "@/lib/store";
+import { businesses as businessesApi } from "@/lib/api";
+import { useFetch } from "@/lib/hooks";
 import { MOCK_BUSINESS } from "@/lib/mock-data";
 
 export default function SettingsPage() {
+  const activeBusiness = useAppStore((s) => s.activeBusiness);
+  const businessId = activeBusiness?.id;
+
+  const { data: businessData, isUsingMockData } = useFetch(
+    () => (businessId ? businessesApi.get(businessId) : Promise.resolve(null)),
+    MOCK_BUSINESS,
+    [businessId]
+  );
+
+  const biz = businessData || MOCK_BUSINESS;
+
   return (
     <div className="p-6 lg:p-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">Setari</h1>
         <p className="text-sm text-gray-500">Configurare afacere, notificari, integrari</p>
+        {isUsingMockData && (
+          <p className="mt-1 text-[10px] text-amber-500 font-medium">
+            Date demo — backend-ul nu este conectat
+          </p>
+        )}
       </div>
 
       <div className="max-w-3xl space-y-6">
         {/* Business info */}
         <Section title="Informatii afacere">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Nume" value={MOCK_BUSINESS.name} />
-            <Field label="Vertical" value={MOCK_BUSINESS.vertical} />
-            <Field label="CUI / CIF" value={MOCK_BUSINESS.cui || "-"} />
-            <Field label="Reg. Com." value={MOCK_BUSINESS.reg_com || "-"} />
-            <Field label="Adresa" value={MOCK_BUSINESS.address || "-"} />
-            <Field label="Oras" value={`${MOCK_BUSINESS.city}, ${MOCK_BUSINESS.county}`} />
-            <Field label="Telefon" value={MOCK_BUSINESS.phone || "-"} />
-            <Field label="Email" value={MOCK_BUSINESS.email || "-"} />
-            <Field label="Website" value={MOCK_BUSINESS.website || "-"} />
-            <Field label="Fus orar" value={MOCK_BUSINESS.timezone} />
+            <Field label="Nume" value={biz.name || "-"} />
+            <Field label="Vertical" value={biz.vertical || "-"} />
+            <Field label="CUI / CIF" value={biz.cui || "-"} />
+            <Field label="Reg. Com." value={biz.reg_com || "-"} />
+            <Field label="Adresa" value={biz.address || "-"} />
+            <Field label="Oras" value={[biz.city, biz.county].filter(Boolean).join(", ") || "-"} />
+            <Field label="Telefon" value={biz.phone || "-"} />
+            <Field label="Email" value={biz.email || "-"} />
+            <Field label="Website" value={biz.website || "-"} />
+            <Field label="Fus orar" value={biz.timezone || "Europe/Bucharest"} />
           </div>
         </Section>
 
         {/* Booking settings */}
         <Section title="Setari programari">
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="Buffer intre programari" value={`${MOCK_BUSINESS.booking_buffer_minutes} minute`} />
-            <Field label="Politica anulare" value={`${MOCK_BUSINESS.cancellation_policy_hours}h inainte`} />
-            <ToggleField label="Confirmare automata" value={MOCK_BUSINESS.auto_confirm_bookings} />
-            <ToggleField label="Plati online" value={MOCK_BUSINESS.allow_online_payments} />
+            <Field label="Buffer intre programari" value={`${biz.booking_buffer_minutes || 0} minute`} />
+            <Field label="Politica anulare" value={`${biz.cancellation_policy_hours || 0}h inainte`} />
+            <ToggleField label="Confirmare automata" value={biz.auto_confirm_bookings ?? false} />
+            <ToggleField label="Plati online" value={biz.allow_online_payments ?? false} />
           </div>
         </Section>
 
@@ -46,22 +65,22 @@ export default function SettingsPage() {
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <ToggleField label="Viber" value={MOCK_BUSINESS.notification_channels.viber} icon="💜" />
-            <ToggleField label="WhatsApp" value={MOCK_BUSINESS.notification_channels.whatsapp} icon="💚" />
-            <ToggleField label="SMS" value={MOCK_BUSINESS.notification_channels.sms} icon="📱" />
-            <ToggleField label="Email" value={MOCK_BUSINESS.notification_channels.email} icon="📧" />
+            <ToggleField label="Viber" value={biz.notification_channels?.viber ?? false} icon="💜" />
+            <ToggleField label="WhatsApp" value={biz.notification_channels?.whatsapp ?? false} icon="💚" />
+            <ToggleField label="SMS" value={biz.notification_channels?.sms ?? false} icon="📱" />
+            <ToggleField label="Email" value={biz.notification_channels?.email ?? false} icon="📧" />
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Field label="Infobip Base URL" value="https://xxxxx.api.infobip.com" masked />
             <Field label="Infobip API Key" value="••••••••••••••••" masked />
-            <Field label="Sender Name" value="SalonElegance" />
+            <Field label="Sender Name" value={biz.name || "BookingCRM"} />
           </div>
         </Section>
 
         {/* e-Factura */}
         <Section title="e-Factura ANAF">
           <div className="mb-4">
-            <ToggleField label="e-Factura activ" value={MOCK_BUSINESS.efactura_enabled} />
+            <ToggleField label="e-Factura activ" value={biz.efactura_enabled ?? false} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="ANAF OAuth Client ID" value="••••••••••" masked />
@@ -83,7 +102,7 @@ export default function SettingsPage() {
               <div className="flex items-center gap-2">
                 <span className="text-lg">🏠</span>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">Airbnb - Ana P.</p>
+                  <p className="text-sm font-medium text-gray-900">Airbnb - Calendar</p>
                   <p className="text-[10px] text-gray-400">airbnb.com/calendar/export/...</p>
                 </div>
               </div>
@@ -92,7 +111,7 @@ export default function SettingsPage() {
               </span>
             </div>
             <p className="text-[10px] text-gray-400">
-              Ultima sincronizare: 19.02.2026 07:15 &middot; 3 evenimente &middot; Sync la 15 min
+              Sync la 15 min
             </p>
           </div>
           <button className="rounded-lg border px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
@@ -105,24 +124,47 @@ export default function SettingsPage() {
           <div className="rounded-xl border-2 border-brand-blue bg-blue-50/50 p-5">
             <div className="flex items-center justify-between">
               <div>
-                <span className="rounded-full bg-brand-blue px-3 py-1 text-xs font-bold text-white">
-                  Professional
+                <span className="rounded-full bg-brand-blue px-3 py-1 text-xs font-bold text-white capitalize">
+                  {biz.subscription_plan || "free"}
                 </span>
-                <p className="mt-2 text-2xl font-bold text-gray-900">59 RON<span className="text-sm font-normal text-gray-400">/luna</span></p>
+                <p className="mt-2 text-2xl font-bold text-gray-900">
+                  {biz.subscription_plan === "professional" ? "59" : biz.subscription_plan === "enterprise" ? "99" : biz.subscription_plan === "starter" ? "29" : "0"} RON
+                  <span className="text-sm font-normal text-gray-400">/luna</span>
+                </p>
                 <ul className="mt-2 space-y-1 text-xs text-gray-600">
-                  <li>5 angajati</li>
-                  <li>500 SMS/luna incluse</li>
-                  <li>Viber + WhatsApp</li>
-                  <li>e-Factura ANAF</li>
-                  <li>iCal Sync</li>
+                  {biz.subscription_plan === "professional" && (
+                    <>
+                      <li>5 angajati</li>
+                      <li>500 SMS/luna incluse</li>
+                      <li>Viber + WhatsApp</li>
+                      <li>e-Factura ANAF</li>
+                      <li>iCal Sync</li>
+                    </>
+                  )}
+                  {biz.subscription_plan === "starter" && (
+                    <>
+                      <li>1 angajat</li>
+                      <li>100 SMS/luna incluse</li>
+                    </>
+                  )}
+                  {biz.subscription_plan === "enterprise" && (
+                    <>
+                      <li>Angajati nelimitati</li>
+                      <li>SMS nelimitat</li>
+                      <li>API access</li>
+                      <li>Suport prioritar</li>
+                    </>
+                  )}
                 </ul>
               </div>
               <div className="text-right">
                 <p className="text-xs text-gray-500">Urmatoarea plata</p>
                 <p className="text-sm font-semibold text-gray-900">01.03.2026</p>
-                <button className="mt-3 rounded-lg bg-brand-blue px-4 py-2 text-xs font-medium text-white">
-                  Upgrade la Enterprise
-                </button>
+                {biz.subscription_plan !== "enterprise" && (
+                  <button className="mt-3 rounded-lg bg-brand-blue px-4 py-2 text-xs font-medium text-white">
+                    Upgrade la Enterprise
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -134,11 +176,14 @@ export default function SettingsPage() {
             <span className="text-lg">🔗</span>
             <div className="flex-1">
               <p className="text-sm font-mono text-brand-blue">
-                https://bookingcrm.ro/salon-elegance
+                https://bookingcrm.ro/{biz.slug || "afacerea-ta"}
               </p>
               <p className="text-[10px] text-gray-400">Partajeaza acest link cu clientii tai</p>
             </div>
-            <button className="rounded-lg bg-brand-blue px-3 py-1.5 text-xs font-medium text-white">
+            <button
+              onClick={() => navigator.clipboard?.writeText(`https://bookingcrm.ro/${biz.slug || ""}`)}
+              className="rounded-lg bg-brand-blue px-3 py-1.5 text-xs font-medium text-white"
+            >
               Copiaza
             </button>
           </div>

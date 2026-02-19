@@ -1,11 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { auth } from "@/lib/api";
+import { auth, businesses } from "@/lib/api";
 import { useAppStore } from "@/lib/store";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-navy to-slate-900">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-brand-blue border-t-transparent" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const isRegister = searchParams.get("register") === "true";
@@ -21,6 +33,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const setAuth = useAppStore((s) => s.setAuth);
+  const setActiveBusiness = useAppStore((s) => s.setActiveBusiness);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,11 +53,34 @@ export default function LoginPage() {
         tokens = await auth.login({ email, password });
       }
 
-      // Get user info
+      // Store token so subsequent API calls work
       localStorage.setItem("bcr_token", tokens.access_token);
+
+      // Get user info
       const user = await auth.me();
       setAuth(tokens.access_token, tokens.refresh_token, user);
-      router.push("/dashboard");
+
+      // Check if user has businesses
+      try {
+        const userBusinesses = await businesses.list();
+        if (userBusinesses && userBusinesses.length > 0) {
+          // Set the first business as active
+          const firstBusiness = userBusinesses[0];
+          setActiveBusiness({
+            id: firstBusiness.id,
+            name: firstBusiness.name,
+            slug: firstBusiness.slug,
+            vertical: firstBusiness.vertical,
+          });
+          router.push("/dashboard");
+        } else {
+          // New user, redirect to onboarding
+          router.push("/onboarding");
+        }
+      } catch {
+        // If businesses endpoint fails, go to onboarding
+        router.push(mode === "register" ? "/onboarding" : "/dashboard");
+      }
     } catch (err: any) {
       setError(err.message || "Eroare la autentificare");
     } finally {

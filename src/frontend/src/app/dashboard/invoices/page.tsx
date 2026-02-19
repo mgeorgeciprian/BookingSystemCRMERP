@@ -1,5 +1,8 @@
 "use client";
 
+import { useAppStore } from "@/lib/store";
+import { invoices as invoicesApi } from "@/lib/api";
+import { useFetch } from "@/lib/hooks";
 import { MOCK_INVOICES } from "@/lib/mock-data";
 
 const statusColors: Record<string, string> = {
@@ -17,8 +20,20 @@ const efacturaColors: Record<string, string> = {
 };
 
 export default function InvoicesPage() {
-  const totalRevenue = MOCK_INVOICES.reduce((a, b) => a + b.total, 0);
-  const paidAmount = MOCK_INVOICES.filter((i) => i.payment_status === "paid").reduce((a, b) => a + b.total, 0);
+  const activeBusiness = useAppStore((s) => s.activeBusiness);
+  const businessId = activeBusiness?.id;
+
+  const { data: invoicesData, isUsingMockData } = useFetch(
+    () => (businessId ? invoicesApi.list(businessId) : Promise.resolve([])),
+    MOCK_INVOICES,
+    [businessId]
+  );
+
+  const invoicesList = invoicesData || [];
+  const totalRevenue = invoicesList.reduce((a: number, b: any) => a + (b.total || 0), 0);
+  const paidAmount = invoicesList
+    .filter((i: any) => i.payment_status === "paid" || i.status === "paid")
+    .reduce((a: number, b: any) => a + (b.total || 0), 0);
   const unpaidAmount = totalRevenue - paidAmount;
 
   return (
@@ -27,6 +42,11 @@ export default function InvoicesPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Facturi</h1>
           <p className="text-sm text-gray-500">e-Factura ANAF integrat nativ</p>
+          {isUsingMockData && (
+            <p className="mt-1 text-[10px] text-amber-500 font-medium">
+              Date demo — backend-ul nu este conectat
+            </p>
+          )}
         </div>
         <button className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white hover:bg-brand-blue-light">
           + Factura noua
@@ -66,62 +86,70 @@ export default function InvoicesPage() {
             </tr>
           </thead>
           <tbody className="divide-y">
-            {MOCK_INVOICES.map((inv) => (
-              <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-5 py-3">
-                  <p className="text-sm font-semibold text-brand-blue">
-                    {inv.series}{inv.number}
-                  </p>
-                </td>
-                <td className="px-5 py-3">
-                  <p className="text-sm font-medium text-gray-900">{inv.buyer_name}</p>
-                  {inv.buyer_cui && (
-                    <p className="text-[10px] text-gray-400">CUI: {inv.buyer_cui}</p>
-                  )}
-                  {inv.buyer_is_company && (
-                    <span className="text-[10px] text-brand-blue font-medium">PJ</span>
-                  )}
-                </td>
-                <td className="px-5 py-3">
-                  <p className="text-sm text-gray-700">
-                    {new Date(inv.invoice_date).toLocaleDateString("ro-RO")}
-                  </p>
-                </td>
-                <td className="px-5 py-3 text-right">
-                  <p className="text-sm text-gray-700">{inv.subtotal.toFixed(2)}</p>
-                </td>
-                <td className="px-5 py-3 text-right">
-                  <p className="text-sm text-gray-500">{inv.vat_amount.toFixed(2)}</p>
-                </td>
-                <td className="px-5 py-3 text-right">
-                  <p className="text-sm font-bold text-gray-900">{inv.total.toFixed(2)} RON</p>
-                </td>
-                <td className="px-5 py-3 text-center">
-                  <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${statusColors[inv.status]}`}>
-                    {inv.status === "paid" ? "Platit" : inv.status === "issued" ? "Emis" : inv.status === "draft" ? "Draft" : inv.status}
-                  </span>
-                </td>
-                <td className="px-5 py-3 text-center">
-                  {inv.efactura_status ? (
-                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${efacturaColors[inv.efactura_status] || "bg-gray-100 text-gray-600"}`}>
-                      {inv.efactura_status === "uploaded" ? "Trimis ANAF" : inv.efactura_status === "accepted" ? "Acceptat ANAF" : inv.efactura_status}
-                    </span>
-                  ) : (
-                    <span className="text-[10px] text-gray-300">-</span>
-                  )}
-                </td>
-                <td className="px-5 py-3 text-center">
-                  <div className="flex items-center justify-center gap-1">
-                    <button className="rounded px-2 py-1 text-[10px] text-gray-500 hover:bg-gray-100">PDF</button>
-                    {inv.efactura_status !== "accepted" && inv.efactura_status !== "uploaded" && (
-                      <button className="rounded px-2 py-1 text-[10px] text-brand-blue font-medium hover:bg-blue-50">
-                        Trimite ANAF
-                      </button>
-                    )}
-                  </div>
+            {invoicesList.length === 0 ? (
+              <tr>
+                <td colSpan={9} className="px-5 py-12 text-center text-gray-400">
+                  Nicio factura gasita.
                 </td>
               </tr>
-            ))}
+            ) : (
+              invoicesList.map((inv: any) => (
+                <tr key={inv.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-5 py-3">
+                    <p className="text-sm font-semibold text-brand-blue">
+                      {inv.series}{inv.number}
+                    </p>
+                  </td>
+                  <td className="px-5 py-3">
+                    <p className="text-sm font-medium text-gray-900">{inv.buyer_name}</p>
+                    {inv.buyer_cui && (
+                      <p className="text-[10px] text-gray-400">CUI: {inv.buyer_cui}</p>
+                    )}
+                    {inv.buyer_is_company && (
+                      <span className="text-[10px] text-brand-blue font-medium">PJ</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3">
+                    <p className="text-sm text-gray-700">
+                      {new Date(inv.invoice_date).toLocaleDateString("ro-RO")}
+                    </p>
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <p className="text-sm text-gray-700">{(inv.subtotal || 0).toFixed(2)}</p>
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <p className="text-sm text-gray-500">{(inv.vat_amount || 0).toFixed(2)}</p>
+                  </td>
+                  <td className="px-5 py-3 text-right">
+                    <p className="text-sm font-bold text-gray-900">{(inv.total || 0).toFixed(2)} RON</p>
+                  </td>
+                  <td className="px-5 py-3 text-center">
+                    <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${statusColors[inv.status] || "bg-gray-100 text-gray-600"}`}>
+                      {inv.status === "paid" ? "Platit" : inv.status === "issued" ? "Emis" : inv.status === "draft" ? "Draft" : inv.status}
+                    </span>
+                  </td>
+                  <td className="px-5 py-3 text-center">
+                    {inv.efactura_status ? (
+                      <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${efacturaColors[inv.efactura_status] || "bg-gray-100 text-gray-600"}`}>
+                        {inv.efactura_status === "uploaded" ? "Trimis ANAF" : inv.efactura_status === "accepted" ? "Acceptat ANAF" : inv.efactura_status}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] text-gray-300">-</span>
+                    )}
+                  </td>
+                  <td className="px-5 py-3 text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      <button className="rounded px-2 py-1 text-[10px] text-gray-500 hover:bg-gray-100">PDF</button>
+                      {inv.efactura_status !== "accepted" && inv.efactura_status !== "uploaded" && (
+                        <button className="rounded px-2 py-1 text-[10px] text-brand-blue font-medium hover:bg-blue-50">
+                          Trimite ANAF
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

@@ -1,11 +1,12 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import { useAppStore } from "@/lib/store";
+import { clients as clientsApi } from "@/lib/api";
+import { useFetch } from "@/lib/hooks";
 import { MOCK_CLIENTS } from "@/lib/mock-data";
 
-// ---------------------------------------------------------------------------
-// Types
-// ---------------------------------------------------------------------------
+// ── Types ──
 type FilterKey = "all" | "vip" | "fidela" | "noi" | "blocati";
 
 interface Client {
@@ -29,9 +30,6 @@ interface Client {
   created_at: string;
 }
 
-// ---------------------------------------------------------------------------
-// Filter chip definitions
-// ---------------------------------------------------------------------------
 const FILTER_CHIPS: { key: FilterKey; label: string }[] = [
   { key: "all", label: "Toti" },
   { key: "vip", label: "VIP" },
@@ -40,9 +38,6 @@ const FILTER_CHIPS: { key: FilterKey; label: string }[] = [
   { key: "blocati", label: "Blocati" },
 ];
 
-// ---------------------------------------------------------------------------
-// Tag color mapping
-// ---------------------------------------------------------------------------
 const TAG_COLORS: Record<string, string> = {
   VIP: "bg-amber-100 text-amber-800 border-amber-300",
   fidela: "bg-emerald-100 text-emerald-800 border-emerald-300",
@@ -57,9 +52,6 @@ function tagClassName(tag: string): string {
   return TAG_COLORS[tag] ?? "bg-gray-100 text-gray-700 border-gray-300";
 }
 
-// ---------------------------------------------------------------------------
-// Channel display
-// ---------------------------------------------------------------------------
 const CHANNEL_LABELS: Record<string, string> = {
   viber: "Viber",
   whatsapp: "WhatsApp",
@@ -67,9 +59,6 @@ const CHANNEL_LABELS: Record<string, string> = {
   email: "Email",
 };
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
 function formatRON(value: number): string {
   return value.toLocaleString("ro-RO", {
     style: "decimal",
@@ -93,22 +82,26 @@ function isNewClient(createdAt: string): boolean {
   return created >= threeMonthsAgo;
 }
 
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 export default function ClientsPage() {
+  const activeBusiness = useAppStore((s) => s.activeBusiness);
+  const businessId = activeBusiness?.id;
+
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState<FilterKey>("all");
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
-  // Cast mock data
-  const allClients = MOCK_CLIENTS as Client[];
+  const { data: clientsData, isUsingMockData } = useFetch(
+    () => (businessId ? clientsApi.list(businessId) : Promise.resolve([])),
+    MOCK_CLIENTS,
+    [businessId]
+  );
 
-  // ---------- Filtering ----------
+  const allClients = (clientsData || []) as Client[];
+
+  // Filtering
   const filtered = useMemo(() => {
     let list = [...allClients];
 
-    // Text search (name, phone, email)
     if (search.trim()) {
       const q = search.trim().toLowerCase();
       list = list.filter(
@@ -119,13 +112,12 @@ export default function ClientsPage() {
       );
     }
 
-    // Filter chips
     switch (activeFilter) {
       case "vip":
-        list = list.filter((c) => c.tags.includes("VIP"));
+        list = list.filter((c) => c.tags?.includes("VIP"));
         break;
       case "fidela":
-        list = list.filter((c) => c.tags.includes("fidela"));
+        list = list.filter((c) => c.tags?.includes("fidela"));
         break;
       case "noi":
         list = list.filter((c) => isNewClient(c.created_at));
@@ -135,43 +127,28 @@ export default function ClientsPage() {
         break;
     }
 
-    // Sort by last_visit_at descending
     list.sort(
       (a, b) =>
-        new Date(b.last_visit_at).getTime() -
-        new Date(a.last_visit_at).getTime()
+        new Date(b.last_visit_at || 0).getTime() -
+        new Date(a.last_visit_at || 0).getTime()
     );
 
     return list;
   }, [allClients, search, activeFilter]);
 
-  // ---------- Stats ----------
+  // Stats
   const stats = useMemo(() => {
-    const totalRevenue = allClients.reduce((s, c) => s + c.total_revenue, 0);
-    const totalAppointments = allClients.reduce(
-      (s, c) => s + c.total_appointments,
-      0
-    );
-    const totalNoShows = allClients.reduce((s, c) => s + c.no_show_count, 0);
-    const avgAppointments =
-      allClients.length > 0
-        ? (totalAppointments / allClients.length).toFixed(1)
-        : "0";
-
-    return {
-      totalClients: allClients.length,
-      totalRevenue,
-      avgAppointments,
-      totalNoShows,
-    };
+    const totalRevenue = allClients.reduce((sum, c) => sum + (c.total_revenue || 0), 0);
+    const totalAppointments = allClients.reduce((sum, c) => sum + (c.total_appointments || 0), 0);
+    const totalNoShows = allClients.reduce((sum, c) => sum + (c.no_show_count || 0), 0);
+    const avgAppointments = allClients.length > 0 ? (totalAppointments / allClients.length).toFixed(1) : "0";
+    return { totalClients: allClients.length, totalRevenue, avgAppointments, totalNoShows };
   }, [allClients]);
 
-  // ---------- Handlers ----------
   function toggleRow(id: number) {
     setExpandedId((prev) => (prev === id ? null : id));
   }
 
-  // ---------- Render ----------
   return (
     <div className="p-6 lg:p-8">
       {/* Header */}
@@ -181,24 +158,13 @@ export default function ClientsPage() {
           <p className="mt-1 text-sm text-gray-500">
             Gestioneaza baza de clienti si istoricul vizitelor
           </p>
+          {isUsingMockData && (
+            <p className="mt-1 text-[10px] text-amber-500 font-medium">
+              Date demo — backend-ul nu este conectat
+            </p>
+          )}
         </div>
-        <button
-          type="button"
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-blue px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-blue-light transition-colors"
-        >
-          <svg
-            className="h-4 w-4"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M12 4.5v15m7.5-7.5h-15"
-            />
-          </svg>
+        <button className="inline-flex items-center gap-2 rounded-lg bg-brand-blue px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-blue-light transition-colors">
           + Client nou
         </button>
       </div>
@@ -206,55 +172,28 @@ export default function ClientsPage() {
       {/* Stats bar */}
       <div className="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border bg-white p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-            Total clienti
-          </p>
-          <p className="mt-1 text-2xl font-bold text-brand-navy">
-            {stats.totalClients}
-          </p>
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Total clienti</p>
+          <p className="mt-1 text-2xl font-bold text-brand-navy">{stats.totalClients}</p>
         </div>
         <div className="rounded-xl border bg-white p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-            Venit total
-          </p>
-          <p className="mt-1 text-2xl font-bold text-brand-green">
-            {formatRON(stats.totalRevenue)}
-          </p>
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Venit total</p>
+          <p className="mt-1 text-2xl font-bold text-brand-green">{formatRON(stats.totalRevenue)}</p>
         </div>
         <div className="rounded-xl border bg-white p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-            Media programari / client
-          </p>
-          <p className="mt-1 text-2xl font-bold text-brand-navy">
-            {stats.avgAppointments}
-          </p>
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">Media programari / client</p>
+          <p className="mt-1 text-2xl font-bold text-brand-navy">{stats.avgAppointments}</p>
         </div>
         <div className="rounded-xl border bg-white p-5">
-          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-            No-shows
-          </p>
-          <p className="mt-1 text-2xl font-bold text-brand-red">
-            {stats.totalNoShows}
-          </p>
+          <p className="text-xs font-medium uppercase tracking-wide text-gray-500">No-shows</p>
+          <p className="mt-1 text-2xl font-bold text-brand-red">{stats.totalNoShows}</p>
         </div>
       </div>
 
       {/* Search + filter chips */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-        {/* Search */}
         <div className="relative flex-1">
-          <svg
-            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-            />
+          <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
           </svg>
           <input
             type="text"
@@ -264,13 +203,10 @@ export default function ClientsPage() {
             className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-sm text-gray-900 placeholder:text-gray-400 focus:border-brand-blue focus:outline-none focus:ring-1 focus:ring-brand-blue"
           />
         </div>
-
-        {/* Filter chips */}
         <div className="flex flex-wrap gap-2">
           {FILTER_CHIPS.map((chip) => (
             <button
               key={chip.key}
-              type="button"
               onClick={() => setActiveFilter(chip.key)}
               className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-colors ${
                 activeFilter === chip.key
@@ -284,7 +220,6 @@ export default function ClientsPage() {
         </div>
       </div>
 
-      {/* Result count */}
       <p className="mb-3 text-xs text-gray-500">
         {filtered.length} din {allClients.length} clienti
       </p>
@@ -307,10 +242,7 @@ export default function ClientsPage() {
             {filtered.length === 0 ? (
               <tbody>
                 <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-12 text-center text-gray-400"
-                  >
+                  <td colSpan={7} className="px-4 py-12 text-center text-gray-400">
                     Niciun client gasit.
                   </td>
                 </tr>
@@ -320,199 +252,102 @@ export default function ClientsPage() {
                 const isExpanded = expandedId === client.id;
                 return (
                   <tbody key={client.id} className="border-b last:border-b-0">
-                    {/* Main row */}
                     <tr
                       onClick={() => toggleRow(client.id)}
                       className={`cursor-pointer transition-colors ${
-                        client.is_blocked
-                          ? "bg-red-50 hover:bg-red-100"
-                          : isExpanded
-                          ? "bg-blue-50"
-                          : "hover:bg-gray-50"
+                        client.is_blocked ? "bg-red-50 hover:bg-red-100" : isExpanded ? "bg-blue-50" : "hover:bg-gray-50"
                       }`}
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium text-gray-900">
-                            {client.full_name}
-                          </span>
-                          {client.tags.includes("VIP") && (
-                            <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-300">
-                              VIP
-                            </span>
+                          <span className="font-medium text-gray-900">{client.full_name}</span>
+                          {client.tags?.includes("VIP") && (
+                            <span className="inline-flex items-center rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800 border border-amber-300">VIP</span>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 font-mono text-xs text-gray-600">
-                        {client.phone}
-                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-gray-600">{client.phone}</td>
                       <td className="hidden px-4 py-3 text-gray-600 md:table-cell">
-                        {client.email ?? (
-                          <span className="text-gray-300">-</span>
-                        )}
+                        {client.email ?? <span className="text-gray-300">-</span>}
                       </td>
-                      <td className="px-4 py-3 text-center font-medium text-gray-900">
-                        {client.total_appointments}
-                      </td>
-                      <td className="px-4 py-3 text-right font-medium text-gray-900">
-                        {formatRON(client.total_revenue)}
-                      </td>
+                      <td className="px-4 py-3 text-center font-medium text-gray-900">{client.total_appointments}</td>
+                      <td className="px-4 py-3 text-right font-medium text-gray-900">{formatRON(client.total_revenue || 0)}</td>
                       <td className="hidden px-4 py-3 text-gray-600 lg:table-cell">
-                        {formatDate(client.last_visit_at)}
+                        {client.last_visit_at ? formatDate(client.last_visit_at) : "-"}
                       </td>
                       <td className="px-4 py-3 text-center">
                         {client.is_blocked ? (
-                          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 border border-red-300">
-                            Blocat
-                          </span>
-                        ) : client.no_show_count >= 2 ? (
-                          <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-700 border border-yellow-300">
-                            Atentie
-                          </span>
+                          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-700 border border-red-300">Blocat</span>
+                        ) : (client.no_show_count || 0) >= 2 ? (
+                          <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-700 border border-yellow-300">Atentie</span>
                         ) : (
-                          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 border border-green-300">
-                            Activ
-                          </span>
+                          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700 border border-green-300">Activ</span>
                         )}
                       </td>
                     </tr>
 
-                    {/* Expanded detail row */}
                     {isExpanded && (
-                      <tr
-                        className={
-                          client.is_blocked ? "bg-red-50/50" : "bg-blue-50/50"
-                        }
-                      >
+                      <tr className={client.is_blocked ? "bg-red-50/50" : "bg-blue-50/50"}>
                         <td colSpan={7} className="px-4 pb-4 pt-2">
                           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                            {/* Tags */}
                             <div>
-                              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Etichete
-                              </p>
+                              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">Etichete</p>
                               <div className="flex flex-wrap gap-1.5">
-                                {client.tags.length === 0 ? (
-                                  <span className="text-xs text-gray-400">
-                                    Fara etichete
-                                  </span>
+                                {!client.tags || client.tags.length === 0 ? (
+                                  <span className="text-xs text-gray-400">Fara etichete</span>
                                 ) : (
                                   client.tags.map((tag) => (
-                                    <span
-                                      key={tag}
-                                      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${tagClassName(tag)}`}
-                                    >
-                                      {tag}
-                                    </span>
+                                    <span key={tag} className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium ${tagClassName(tag)}`}>{tag}</span>
                                   ))
                                 )}
                               </div>
                             </div>
-
-                            {/* Notes */}
                             <div>
-                              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Notite
-                              </p>
-                              <p className="text-sm text-gray-700">
-                                {client.notes || (
-                                  <span className="text-gray-400">-</span>
-                                )}
-                              </p>
+                              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">Notite</p>
+                              <p className="text-sm text-gray-700">{client.notes || <span className="text-gray-400">-</span>}</p>
                               {client.is_blocked && client.blocked_reason && (
-                                <p className="mt-1 text-sm font-medium text-red-600">
-                                  Motiv blocare: {client.blocked_reason}
-                                </p>
+                                <p className="mt-1 text-sm font-medium text-red-600">Motiv blocare: {client.blocked_reason}</p>
                               )}
                             </div>
-
-                            {/* Preferred channel */}
                             <div>
-                              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Canal preferat
-                              </p>
-                              <p className="text-sm font-medium text-gray-700">
-                                {CHANNEL_LABELS[client.preferred_channel] ??
-                                  client.preferred_channel}
-                              </p>
+                              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">Canal preferat</p>
+                              <p className="text-sm font-medium text-gray-700">{CHANNEL_LABELS[client.preferred_channel] ?? client.preferred_channel}</p>
                               <p className="mt-0.5 text-xs text-gray-500">
-                                Sursa:{" "}
-                                {client.source === "online_booking"
-                                  ? "Booking online"
-                                  : client.source === "referral"
-                                  ? "Recomandare"
-                                  : client.source === "manual"
-                                  ? "Adaugat manual"
-                                  : client.source}
+                                Sursa: {client.source === "online_booking" ? "Booking online" : client.source === "referral" ? "Recomandare" : client.source === "manual" ? "Adaugat manual" : client.source}
                               </p>
                             </div>
-
-                            {/* GDPR consent */}
                             <div>
-                              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">
-                                Consimtamant GDPR
-                              </p>
+                              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500">Consimtamant GDPR</p>
                               <div className="flex items-center gap-2">
                                 {client.gdpr_consent ? (
                                   <span className="inline-flex items-center gap-1 text-sm font-medium text-green-700">
-                                    <svg
-                                      className="h-4 w-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth={2.5}
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="m4.5 12.75 6 6 9-13.5"
-                                      />
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                                     </svg>
                                     Acordat
                                   </span>
                                 ) : (
                                   <span className="inline-flex items-center gap-1 text-sm font-medium text-red-600">
-                                    <svg
-                                      className="h-4 w-4"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      strokeWidth={2.5}
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M6 18 18 6M6 6l12 12"
-                                      />
+                                    <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                                     </svg>
                                     Neacordat
                                   </span>
                                 )}
                               </div>
-                              {client.gdpr_consent && (
-                                <p className="mt-0.5 text-xs text-gray-500">
-                                  Din {formatDate(client.gdpr_consent_date)}
-                                </p>
+                              {client.gdpr_consent && client.gdpr_consent_date && (
+                                <p className="mt-0.5 text-xs text-gray-500">Din {formatDate(client.gdpr_consent_date)}</p>
                               )}
                               <p className="mt-0.5 text-xs text-gray-500">
-                                Art. 9 (date sensibile):{" "}
-                                {client.gdpr_article9_consent ? "Da" : "Nu"}
+                                Art. 9 (date sensibile): {client.gdpr_article9_consent ? "Da" : "Nu"}
                               </p>
                             </div>
                           </div>
-
-                          {/* No-show info */}
-                          {client.no_show_count > 0 && (
+                          {(client.no_show_count || 0) > 0 && (
                             <div className="mt-3 rounded-lg bg-yellow-50 border border-yellow-200 px-3 py-2">
                               <p className="text-xs font-medium text-yellow-800">
-                                Neprezentari: {client.no_show_count} din{" "}
-                                {client.total_appointments} programari (
-                                {(
-                                  (client.no_show_count /
-                                    client.total_appointments) *
-                                  100
-                                ).toFixed(0)}
-                                %)
+                                Neprezentari: {client.no_show_count} din {client.total_appointments} programari (
+                                {((client.no_show_count / client.total_appointments) * 100).toFixed(0)}%)
                               </p>
                             </div>
                           )}

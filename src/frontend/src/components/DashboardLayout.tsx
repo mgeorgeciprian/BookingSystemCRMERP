@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { MOCK_BUSINESS } from "@/lib/mock-data";
+import { usePathname, useRouter } from "next/navigation";
+import { useAppStore } from "@/lib/store";
 
 const NAV_ITEMS = [
   { label: "Dashboard", href: "/dashboard", icon: "📊" },
@@ -21,6 +21,28 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const activeBusiness = useAppStore((s) => s.activeBusiness);
+  const user = useAppStore((s) => s.user);
+  const logout = useAppStore((s) => s.logout);
+
+  const businessName = activeBusiness?.name || "Selecteaza afacere";
+  const businessSlug = activeBusiness?.slug || "";
+  const businessVertical = activeBusiness?.vertical || "";
+
+  const userInitials = user?.full_name
+    ? user.full_name
+        .split(" ")
+        .map((nameFragment: string) => nameFragment[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "??";
+
+  const handleLogout = () => {
+    logout();
+    router.push("/login");
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -35,15 +57,17 @@ export default function DashboardLayout({
             <h1 className="text-base font-bold text-white">
               Booking<span className="text-brand-blue">CRM</span>
             </h1>
-            <p className="text-[10px] text-gray-500 font-mono">v0.1.0 DEMO</p>
+            <p className="text-[10px] text-gray-500 font-mono">v0.1.0</p>
           </div>
         </div>
 
         {/* Business selector */}
         <div className="mx-3 mt-4 rounded-lg bg-white/5 px-3 py-2.5">
           <p className="text-xs text-gray-500">Afacere activa</p>
-          <p className="text-sm font-semibold text-white truncate">{MOCK_BUSINESS.name}</p>
-          <p className="text-[10px] text-gray-500">{MOCK_BUSINESS.city} &middot; {MOCK_BUSINESS.subscription_plan}</p>
+          <p className="text-sm font-semibold text-white truncate">{businessName}</p>
+          {businessVertical && (
+            <p className="text-[10px] text-gray-500 capitalize">{businessVertical}</p>
+          )}
         </div>
 
         {/* Navigation */}
@@ -68,26 +92,37 @@ export default function DashboardLayout({
         </nav>
 
         {/* Public booking link */}
-        <div className="mx-3 mb-3">
-          <Link
-            href="/salon-elegance"
-            className="flex items-center gap-2 rounded-lg border border-brand-blue/30 bg-brand-blue/10 px-3 py-2 text-xs text-brand-blue hover:bg-brand-blue/20 transition-colors"
-          >
-            <span>🔗</span>
-            <span>Pagina publica booking</span>
-          </Link>
-        </div>
+        {businessSlug && (
+          <div className="mx-3 mb-3">
+            <Link
+              href={`/${businessSlug}`}
+              className="flex items-center gap-2 rounded-lg border border-brand-blue/30 bg-brand-blue/10 px-3 py-2 text-xs text-brand-blue hover:bg-brand-blue/20 transition-colors"
+            >
+              <span>🔗</span>
+              <span>Pagina publica booking</span>
+            </Link>
+          </div>
+        )}
 
         {/* User */}
         <div className="border-t border-white/10 px-3 py-4">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-brand-blue text-xs font-bold text-white">
-              AS
+              {userInitials}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">Andreea Stanescu</p>
-              <p className="text-[10px] text-gray-500">Manager</p>
+              <p className="text-sm font-medium text-white truncate">
+                {user?.full_name || "Utilizator"}
+              </p>
+              <p className="text-[10px] text-gray-500">{user?.role || ""}</p>
             </div>
+            <button
+              onClick={handleLogout}
+              className="text-gray-500 hover:text-white transition-colors text-xs"
+              title="Deconectare"
+            >
+              ⬅
+            </button>
           </div>
         </div>
       </aside>

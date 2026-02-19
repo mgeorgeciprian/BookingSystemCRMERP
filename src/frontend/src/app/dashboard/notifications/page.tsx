@@ -1,5 +1,8 @@
 "use client";
 
+import { useAppStore } from "@/lib/store";
+import { notifications as notificationsApi } from "@/lib/api";
+import { useFetch } from "@/lib/hooks";
 import { MOCK_NOTIFICATIONS, MOCK_STATS } from "@/lib/mock-data";
 
 const channelIcons: Record<string, string> = {
@@ -27,9 +30,21 @@ const typeLabels: Record<string, string> = {
 };
 
 export default function NotificationsPage() {
+  const activeBusiness = useAppStore((s) => s.activeBusiness);
+  const businessId = activeBusiness?.id;
+
+  const { data: notificationsData, isUsingMockData } = useFetch(
+    () => (businessId ? notificationsApi.log(businessId) : Promise.resolve([])),
+    MOCK_NOTIFICATIONS,
+    [businessId]
+  );
+
+  const notificationsList = notificationsData || [];
+
+  // Use mock stats for channel breakdown (no dedicated endpoint yet)
   const ch = MOCK_STATS.channel_breakdown;
-  const totalSent = ch.reduce((a, b) => a + b.count, 0);
-  const totalCost = ch.reduce((a, b) => a + b.cost, 0);
+  const totalSent = ch.reduce((a: number, b: any) => a + b.count, 0);
+  const totalCost = ch.reduce((a: number, b: any) => a + b.cost, 0);
 
   return (
     <div className="p-6 lg:p-8">
@@ -37,6 +52,11 @@ export default function NotificationsPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Notificari</h1>
           <p className="text-sm text-gray-500">Viber &rarr; WhatsApp &rarr; SMS (strategie fallback)</p>
+          {isUsingMockData && (
+            <p className="mt-1 text-[10px] text-amber-500 font-medium">
+              Date demo — backend-ul nu este conectat
+            </p>
+          )}
         </div>
         <button className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white hover:bg-brand-blue-light">
           Trimite mesaj manual
@@ -45,7 +65,7 @@ export default function NotificationsPage() {
 
       {/* Channel stats */}
       <div className="mb-6 grid gap-4 sm:grid-cols-4">
-        {ch.map((c) => (
+        {ch.map((c: any) => (
           <div key={c.channel} className="rounded-xl border bg-white p-4">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xl">{channelIcons[c.channel.toLowerCase()] || "📨"}</span>
@@ -67,7 +87,11 @@ export default function NotificationsPage() {
         <p className="text-xs font-semibold text-blue-800 mb-1">Economii cu strategia Viber-first</p>
         <p className="text-xs text-blue-600">
           Daca toate cele {totalSent} mesaje ar fi fost trimise prin SMS, costul ar fi fost ~{(totalSent * 0.06).toFixed(2)} EUR.
-          Cu strategia Viber-first, platesti doar {totalCost.toFixed(2)} EUR. <strong>Economie: {((totalSent * 0.06) - totalCost).toFixed(2)} EUR ({(((totalSent * 0.06 - totalCost) / (totalSent * 0.06)) * 100).toFixed(0)}%)</strong>
+          Cu strategia Viber-first, platesti doar {totalCost.toFixed(2)} EUR.{" "}
+          <strong>
+            Economie: {((totalSent * 0.06) - totalCost).toFixed(2)} EUR (
+            {(((totalSent * 0.06 - totalCost) / (totalSent * 0.06)) * 100).toFixed(0)}%)
+          </strong>
         </p>
       </div>
 
@@ -77,41 +101,42 @@ export default function NotificationsPage() {
           <h3 className="text-sm font-semibold text-gray-900">Jurnal notificari</h3>
         </div>
         <div className="divide-y">
-          {MOCK_NOTIFICATIONS.map((notif) => (
-            <div key={notif.id} className="flex items-start gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
-              {/* Channel icon */}
-              <span className="mt-0.5 text-xl">{channelIcons[notif.channel] || "📨"}</span>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-1">
-                  <span className="text-xs font-semibold text-gray-900">
-                    {typeLabels[notif.message_type] || notif.message_type}
-                  </span>
-                  <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColors[notif.status]}`}>
-                    {notif.status === "delivered" ? "Livrat" : notif.status === "read" ? "Citit" : notif.status === "sent" ? "Trimis" : notif.status}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-500 mb-1">Catre: {notif.recipient}</p>
-                <p className="text-xs text-gray-600 line-clamp-2 whitespace-pre-line">{notif.content}</p>
-              </div>
-
-              {/* Meta */}
-              <div className="text-right shrink-0">
-                <p className="text-xs text-gray-500">
-                  {new Date(notif.created_at).toLocaleString("ro-RO", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-                <p className="text-[10px] text-gray-400 mt-0.5">
-                  {notif.cost} {notif.cost_currency}
-                </p>
-              </div>
+          {notificationsList.length === 0 ? (
+            <div className="px-5 py-12 text-center text-gray-400 text-sm">
+              Nicio notificare gasita.
             </div>
-          ))}
+          ) : (
+            notificationsList.map((notif: any) => (
+              <div key={notif.id} className="flex items-start gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
+                <span className="mt-0.5 text-xl">{channelIcons[notif.channel] || "📨"}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs font-semibold text-gray-900">
+                      {typeLabels[notif.message_type] || notif.message_type}
+                    </span>
+                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColors[notif.status] || "bg-gray-100 text-gray-600"}`}>
+                      {notif.status === "delivered" ? "Livrat" : notif.status === "read" ? "Citit" : notif.status === "sent" ? "Trimis" : notif.status}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-1">Catre: {notif.recipient}</p>
+                  <p className="text-xs text-gray-600 line-clamp-2 whitespace-pre-line">{notif.content}</p>
+                </div>
+                <div className="text-right shrink-0">
+                  <p className="text-xs text-gray-500">
+                    {new Date(notif.created_at).toLocaleString("ro-RO", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-0.5">
+                    {notif.cost} {notif.cost_currency}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
