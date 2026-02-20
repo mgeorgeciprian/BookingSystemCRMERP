@@ -2,8 +2,79 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap");
+@layer base {
+  :root {
+    --surface-primary: #ffffff;
+    --surface-secondary: #f9fafb;
+    --surface-tertiary: #f3f4f6;
+    --text-primary: #111827;
+    --text-secondary: #6b7280;
+    --text-tertiary: #9ca3af;
+    --border-primary: #e5e7eb;
+    --border-secondary: #f3f4f6;
 
-body {
-  @apply bg-gray-50 text-gray-900 font-sans antialiased;
+    /* Vertical accent defaults (overridden by data-vertical) */
+    --vertical-tint: #f9fafb;
+    --vertical-accent: #1d4ed8;
+  }
+
+  .dark {
+    --surface-primary: #111827;
+    --surface-secondary: #1f2937;
+    --surface-tertiary: #374151;
+    --text-primary: #f9fafb;
+    --text-secondary: #9ca3af;
+    --text-tertiary: #6b7280;
+    --border-primary: #374151;
+    --border-secondary: #1f2937;
+  }
+
+  /* Vertical tint colors */
+  [data-vertical="salon"] {
+    --vertical-tint: #fdf2f8;
+    --vertical-accent: #db2777;
+  }
+  [data-vertical="dental"] {
+    --vertical-tint: #f0f9ff;
+    --vertical-accent: #0284c7;
+  }
+  [data-vertical="therapy"] {
+    --vertical-tint: #f5f3ff;
+    --vertical-accent: #7c3aed;
+  }
+  [data-vertical="fitness"] {
+    --vertical-tint: #fff7ed;
+    --vertical-accent: #ea580c;
+  }
+  [data-vertical="massage"] {
+    --vertical-tint: #fefce8;
+    --vertical-accent: #ca8a04;
+  }
+  [data-vertical="tutor"] {
+    --vertical-tint: #ecfdf5;
+    --vertical-accent: #059669;
+  }
+  [data-vertical="medical"] {
+    --vertical-tint: #eff6ff;
+    --vertical-accent: #2563eb;
+  }
+  [data-vertical="other"] {
+    --vertical-tint: #f9fafb;
+    --vertical-accent: #1d4ed8;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900 font-sans antialiased;
+  }
+}
+
+@layer utilities {
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }

@@ -5,6 +5,8 @@ import { useAppStore } from "@/lib/store";
 import { services as servicesApi, serviceCategories as categoriesApi } from "@/lib/api";
 import { useFetch } from "@/lib/hooks";
 import { MOCK_SERVICES, MOCK_CATEGORIES } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
+import { X } from "lucide-react";
 
 // ============================================================
 // Types
@@ -116,7 +118,7 @@ export default function ServicesPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setShowCategoryModal(true)}
-            className="rounded-lg border px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            className="rounded-lg border px-4 py-2 min-h-[44px] text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
           >
             + Categorie
           </button>
@@ -125,7 +127,7 @@ export default function ServicesPage() {
               setEditingService(null);
               setShowServiceModal(true);
             }}
-            className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white hover:bg-brand-blue-light transition-colors"
+            className="rounded-lg bg-brand-blue px-4 py-2 min-h-[44px] text-sm font-medium text-white hover:bg-brand-blue-light transition-colors"
           >
             + Serviciu nou
           </button>
@@ -181,13 +183,13 @@ export default function ServicesPage() {
         <div className="flex gap-1 border rounded-lg p-0.5">
           <button
             onClick={() => setViewMode("grid")}
-            className={`rounded-md px-2.5 py-1 text-xs ${viewMode === "grid" ? "bg-gray-100 text-gray-900" : "text-gray-400"}`}
+            className={cn("rounded-md px-2.5 py-1 text-xs min-h-[44px]", viewMode === "grid" ? "bg-gray-100 text-gray-900" : "text-gray-400")}
           >
             Grid
           </button>
           <button
             onClick={() => setViewMode("list")}
-            className={`rounded-md px-2.5 py-1 text-xs ${viewMode === "list" ? "bg-gray-100 text-gray-900" : "text-gray-400"}`}
+            className={cn("rounded-md px-2.5 py-1 text-xs min-h-[44px]", viewMode === "list" ? "bg-gray-100 text-gray-900" : "text-gray-400")}
           >
             Lista
           </button>
@@ -437,7 +439,7 @@ function ServiceModal({
       <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl" onClick={(clickEvent) => clickEvent.stopPropagation()}>
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4 rounded-t-2xl">
           <h3 className="text-lg font-bold text-gray-900">{isEditing ? "Editeaza serviciu" : "Serviciu nou"}</h3>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="p-6 space-y-4">
@@ -569,7 +571,7 @@ function CategoryModal({
       <div className="relative w-full max-w-sm rounded-2xl bg-white shadow-2xl" onClick={(clickEvent) => clickEvent.stopPropagation()}>
         <div className="flex items-center justify-between border-b px-6 py-4">
           <h3 className="text-lg font-bold text-gray-900">Categorie noua</h3>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
         </div>
         <div className="p-6 space-y-4">
           {errorMessage && <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</div>}

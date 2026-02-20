@@ -5,6 +5,8 @@ import { useAppStore } from "@/lib/store";
 import { invoices as invoicesApi, clients as clientsApi } from "@/lib/api";
 import { useFetch } from "@/lib/hooks";
 import { MOCK_INVOICES, MOCK_CLIENTS } from "@/lib/mock-data";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { X } from "lucide-react";
 
 // ============================================================
 // Types
@@ -170,7 +172,7 @@ export default function InvoicesPage() {
         </div>
         <button
           onClick={() => setShowCreateModal(true)}
-          className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white hover:bg-brand-blue-light transition-colors"
+          className="rounded-lg bg-brand-blue px-4 py-2 min-h-[44px] text-sm font-medium text-white hover:bg-brand-blue-light transition-colors"
         >
           + Factura noua
         </button>
@@ -279,9 +281,7 @@ export default function InvoicesPage() {
                       <p className="text-sm font-bold text-gray-900">{(invoice.total || 0).toFixed(2)} RON</p>
                     </td>
                     <td className="px-5 py-3 text-center">
-                      <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-medium ${STATUS_COLORS[invoice.status] || "bg-gray-100 text-gray-600"}`}>
-                        {STATUS_LABELS[invoice.status] || invoice.status}
-                      </span>
+                      <StatusBadge status={invoice.status} type="invoice" />
                     </td>
                     <td className="px-5 py-3 text-center">
                       {invoice.efactura_status ? (
@@ -471,7 +471,7 @@ function CreateInvoiceModal({
       <div className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl" onClick={(clickEvent) => clickEvent.stopPropagation()}>
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4 rounded-t-2xl">
           <h3 className="text-lg font-bold text-gray-900">Factura noua</h3>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="p-6 space-y-5">
@@ -567,7 +567,7 @@ function CreateInvoiceModal({
                     </div>
                     {lineItems.length > 1 && (
                       <button onClick={() => removeLineItem(itemIndex)} className="text-red-400 hover:text-red-600 p-1">
-                        <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                        <X className="h-4 w-4" />
                       </button>
                     )}
                   </div>

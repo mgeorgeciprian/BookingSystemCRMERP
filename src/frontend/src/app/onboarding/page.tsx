@@ -376,7 +376,7 @@ export default function OnboardingPage() {
             {currentStep > 0 ? (
               <button
                 onClick={handleBack}
-                className="flex items-center gap-1 rounded-lg px-4 py-2.5 text-sm text-gray-400 hover:text-white transition-colors"
+                className="flex items-center gap-1 rounded-lg px-4 py-2.5 min-h-[44px] text-sm text-gray-400 hover:text-white transition-colors"
               >
                 <ChevronLeft className="h-4 w-4" />
                 Inapoi
@@ -389,7 +389,7 @@ export default function OnboardingPage() {
               <button
                 onClick={handleNext}
                 disabled={!canGoNext()}
-                className="flex items-center gap-1 rounded-lg bg-brand-blue px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-blue-light disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center gap-1 rounded-lg bg-brand-blue px-6 py-2.5 min-h-[44px] text-sm font-semibold text-white hover:bg-brand-blue-light disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 Continua
                 <ChevronRight className="h-4 w-4" />
@@ -398,7 +398,7 @@ export default function OnboardingPage() {
               <button
                 onClick={handleSubmit}
                 disabled={loading}
-                className="flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-50 transition-colors"
+                className="flex items-center gap-2 rounded-lg bg-green-600 px-6 py-2.5 min-h-[44px] text-sm font-semibold text-white hover:bg-green-500 disabled:opacity-50 transition-colors"
               >
                 <Building2 className="h-4 w-4" />
                 {loading ? "Se creeaza..." : "Creeaza afacerea"}

@@ -5,6 +5,7 @@ import { useAppStore } from "@/lib/store";
 import { businesses as businessesApi, icalSources } from "@/lib/api";
 import { useFetch } from "@/lib/hooks";
 import { MOCK_BUSINESS } from "@/lib/mock-data";
+import { MessageCircle, Smartphone, Mail, ExternalLink, Calendar } from "lucide-react";
 
 const VERTICALS = [
   { value: "salon", label: "Salon" },
@@ -202,9 +203,9 @@ export default function SettingsPage() {
             </p>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <EditableToggle label="WhatsApp" value={formData.notification_channels?.whatsapp ?? false} onChange={(v) => updateNotificationChannel("whatsapp", v)} icon="💚" />
-            <EditableToggle label="SMS" value={formData.notification_channels?.sms ?? false} onChange={(v) => updateNotificationChannel("sms", v)} icon="📱" />
-            <EditableToggle label="Email" value={formData.notification_channels?.email ?? false} onChange={(v) => updateNotificationChannel("email", v)} icon="📧" />
+            <EditableToggle label="WhatsApp" value={formData.notification_channels?.whatsapp ?? false} onChange={(v) => updateNotificationChannel("whatsapp", v)} icon={<MessageCircle className="h-4 w-4 text-green-600" />} />
+            <EditableToggle label="SMS" value={formData.notification_channels?.sms ?? false} onChange={(v) => updateNotificationChannel("sms", v)} icon={<Smartphone className="h-4 w-4 text-gray-600" />} />
+            <EditableToggle label="Email" value={formData.notification_channels?.email ?? false} onChange={(v) => updateNotificationChannel("email", v)} icon={<Mail className="h-4 w-4 text-blue-600" />} />
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <ReadOnlyField label="Infobip Base URL" value="https://xxxxx.api.infobip.com" />
@@ -226,7 +227,7 @@ export default function SettingsPage() {
             <ReadOnlyField label="Token status" value="Valid pana 15.08.2026" />
           </div>
           <div className="mt-3">
-            <button className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100">
+            <button className="min-h-[44px] rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100">
               Re-autorizare ANAF OAuth
             </button>
           </div>
@@ -240,7 +241,7 @@ export default function SettingsPage() {
                 <div key={source.id} className="rounded-lg border p-4">
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
-                      <span className="text-lg">📅</span>
+                      <Calendar className="h-5 w-5 text-brand-blue" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">{source.name}</p>
                         <p className="text-[10px] text-gray-400 truncate max-w-[200px]">{source.url}</p>
@@ -275,7 +276,7 @@ export default function SettingsPage() {
             <div className="mb-4 rounded-lg border p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-lg">🏠</span>
+                  <Calendar className="h-5 w-5 text-brand-blue" />
                   <div>
                     <p className="text-sm font-medium text-gray-900">Airbnb - Calendar</p>
                     <p className="text-[10px] text-gray-400">airbnb.com/calendar/export/...</p>
@@ -373,7 +374,7 @@ export default function SettingsPage() {
                 <p className="text-xs text-gray-500">Urmatoarea plata</p>
                 <p className="text-sm font-semibold text-gray-900">01.03.2026</p>
                 {biz.subscription_plan !== "enterprise" && (
-                  <button className="mt-3 rounded-lg bg-brand-blue px-4 py-2 text-xs font-medium text-white">
+                  <button className="mt-3 min-h-[44px] rounded-lg bg-brand-blue px-4 py-2 text-xs font-medium text-white">
                     Upgrade la Enterprise
                   </button>
                 )}
@@ -385,7 +386,7 @@ export default function SettingsPage() {
         {/* Public booking link */}
         <Section title="Link public booking">
           <div className="flex items-center gap-3 rounded-lg bg-gray-50 border p-4">
-            <span className="text-lg">🔗</span>
+            <ExternalLink className="h-5 w-5 text-brand-blue" />
             <div className="flex-1">
               <p className="text-sm font-mono text-brand-blue">
                 https://bookingcrm.ro/{biz.slug || "afacerea-ta"}
@@ -461,7 +462,7 @@ function EditableSelect({ label, value, options, onChange }: { label: string; va
   );
 }
 
-function EditableToggle({ label, value, onChange, icon }: { label: string; value: boolean; onChange: (v: boolean) => void; icon?: string }) {
+function EditableToggle({ label, value, onChange, icon }: { label: string; value: boolean; onChange: (v: boolean) => void; icon?: string | React.ReactNode }) {
   return (
     <button
       type="button"
@@ -469,7 +470,7 @@ function EditableToggle({ label, value, onChange, icon }: { label: string; value
       className="flex w-full items-center justify-between rounded-lg bg-gray-50 px-4 py-2.5 hover:bg-gray-100 transition-colors"
     >
       <div className="flex items-center gap-2">
-        {icon && <span>{icon}</span>}
+        {icon && <span className="shrink-0">{icon}</span>}
         <span className="text-sm text-gray-700">{label}</span>
       </div>
       <div
@@ -502,7 +503,7 @@ function SaveButton({ saving, success, onClick, disabled }: { saving: boolean; s
       <button
         onClick={onClick}
         disabled={saving || disabled}
-        className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white hover:bg-brand-blue-light disabled:opacity-50 transition-colors"
+        className="min-h-[44px] rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white hover:bg-brand-blue-light disabled:opacity-50 transition-colors"
       >
         {saving ? "Se salveaza..." : "Salveaza modificarile"}
       </button>

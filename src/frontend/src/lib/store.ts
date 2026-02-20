@@ -34,6 +34,8 @@ interface AppState {
   // UI
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
+  sidebarCollapsed: boolean;
+  setSidebarCollapsed: (collapsed: boolean) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -60,6 +62,9 @@ export const useAppStore = create<AppState>()(
 
       sidebarOpen: true,
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
+
+      sidebarCollapsed: false,
+      setSidebarCollapsed: (collapsed) => set({ sidebarCollapsed: collapsed }),
     }),
     {
       name: "bcr-store",
@@ -68,6 +73,7 @@ export const useAppStore = create<AppState>()(
         refreshToken: state.refreshToken,
         user: state.user,
         activeBusiness: state.activeBusiness,
+        sidebarCollapsed: state.sidebarCollapsed,
       }),
     }
   )

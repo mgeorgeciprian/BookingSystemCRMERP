@@ -115,14 +115,14 @@ function LoginForm() {
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
                 required
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-gray-500 focus:border-brand-blue focus:outline-none"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-blue focus:outline-none"
               />
               <input
                 type="tel"
                 placeholder="Telefon (optional)"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-gray-500 focus:border-brand-blue focus:outline-none"
+                className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-blue focus:outline-none"
               />
             </>
           )}
@@ -132,7 +132,7 @@ function LoginForm() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-gray-500 focus:border-brand-blue focus:outline-none"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-blue focus:outline-none"
           />
           <input
             type="password"
@@ -141,12 +141,12 @@ function LoginForm() {
             onChange={(e) => setPassword(e.target.value)}
             required
             minLength={6}
-            className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-2.5 text-white placeholder-gray-500 focus:border-brand-blue focus:outline-none"
+            className="w-full rounded-lg border border-white/10 bg-white/5 px-4 py-3 text-white placeholder-gray-500 focus:border-brand-blue focus:outline-none"
           />
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-lg bg-brand-blue px-4 py-2.5 font-semibold text-white hover:bg-brand-blue-light disabled:opacity-50"
+            className="w-full rounded-lg bg-brand-blue px-4 py-3 min-h-[44px] font-semibold text-white hover:bg-brand-blue-light disabled:opacity-50 transition-colors"
           >
             {loading
               ? "Se incarca..."

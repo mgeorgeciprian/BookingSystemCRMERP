@@ -4,21 +4,16 @@ import { useAppStore } from "@/lib/store";
 import { notifications as notificationsApi } from "@/lib/api";
 import { useFetch } from "@/lib/hooks";
 import { MOCK_NOTIFICATIONS, MOCK_STATS } from "@/lib/mock-data";
+import { MessageCircle, Smartphone, Mail, Send } from "lucide-react";
+import { StatusBadge } from "@/components/ui/StatusBadge";
 
-const channelIcons: Record<string, string> = {
-  viber: "💜",
-  whatsapp: "💚",
-  sms: "📱",
-  email: "📧",
-};
-
-const statusColors: Record<string, string> = {
-  pending: "bg-gray-100 text-gray-600",
-  sent: "bg-blue-100 text-blue-700",
-  delivered: "bg-emerald-100 text-emerald-700",
-  read: "bg-purple-100 text-purple-700",
-  failed: "bg-red-100 text-red-700",
-};
+function ChannelIcon({ channel }: { channel: string }) {
+  const ch = channel.toLowerCase();
+  if (ch === "whatsapp") return <MessageCircle className="h-5 w-5 text-green-600" />;
+  if (ch === "email") return <Mail className="h-5 w-5 text-blue-600" />;
+  if (ch === "sms") return <Smartphone className="h-5 w-5 text-gray-600" />;
+  return <Send className="h-5 w-5 text-gray-400" />;
+}
 
 const typeLabels: Record<string, string> = {
   booking_confirm: "Confirmare programare",
@@ -51,14 +46,14 @@ export default function NotificationsPage() {
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Notificari</h1>
-          <p className="text-sm text-gray-500">Viber &rarr; WhatsApp &rarr; SMS (strategie fallback)</p>
+          <p className="text-sm text-gray-500">WhatsApp &rarr; SMS &rarr; Email (strategie fallback)</p>
           {isUsingMockData && (
             <p className="mt-1 text-[10px] text-amber-500 font-medium">
               Date demo — backend-ul nu este conectat
             </p>
           )}
         </div>
-        <button className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white hover:bg-brand-blue-light">
+        <button className="min-h-[44px] rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white hover:bg-brand-blue-light">
           Trimite mesaj manual
         </button>
       </div>
@@ -68,7 +63,7 @@ export default function NotificationsPage() {
         {ch.map((c: any) => (
           <div key={c.channel} className="rounded-xl border bg-white p-4">
             <div className="flex items-center gap-2 mb-2">
-              <span className="text-xl">{channelIcons[c.channel.toLowerCase()] || "📨"}</span>
+              <ChannelIcon channel={c.channel} />
               <span className="text-sm font-medium text-gray-700">{c.channel}</span>
             </div>
             <p className="text-2xl font-bold text-gray-900">{c.count}</p>
@@ -108,15 +103,13 @@ export default function NotificationsPage() {
           ) : (
             notificationsList.map((notif: any) => (
               <div key={notif.id} className="flex items-start gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
-                <span className="mt-0.5 text-xl">{channelIcons[notif.channel] || "📨"}</span>
+                <div className="mt-0.5"><ChannelIcon channel={notif.channel} /></div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xs font-semibold text-gray-900">
                       {typeLabels[notif.message_type] || notif.message_type}
                     </span>
-                    <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${statusColors[notif.status] || "bg-gray-100 text-gray-600"}`}>
-                      {notif.status === "delivered" ? "Livrat" : notif.status === "read" ? "Citit" : notif.status === "sent" ? "Trimis" : notif.status}
-                    </span>
+                    <StatusBadge status={notif.status} type="notification" />
                   </div>
                   <p className="text-xs text-gray-500 mb-1">Catre: {notif.recipient}</p>
                   <p className="text-xs text-gray-600 line-clamp-2 whitespace-pre-line">{notif.content}</p>

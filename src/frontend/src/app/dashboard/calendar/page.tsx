@@ -18,6 +18,10 @@ import {
   MOCK_SERVICES,
   MOCK_CLIENTS,
 } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { SlideOver } from "@/components/ui/SlideOver";
+import { X } from "lucide-react";
 
 // ============================================================
 // Types
@@ -88,7 +92,7 @@ interface AvailabilitySlot {
 // Constants
 // ============================================================
 const HOURS = Array.from({ length: 13 }, (_, i) => 8 + i); // 08:00 .. 20:00
-const ROW_HEIGHT = 72; // px per hour row
+const ROW_HEIGHT = 80; // px per hour row
 const DAY_NAMES_SHORT = ["Lu", "Ma", "Mi", "Jo", "Vi", "Sa", "Du"];
 const DAY_NAMES = ["Luni", "Marti", "Miercuri", "Joi", "Vineri", "Sambata", "Duminica"];
 
@@ -199,6 +203,7 @@ export default function CalendarPage() {
   const [newSlotTime, setNewSlotTime] = useState<{ date: string; hour: number; minute: number; employeeId: number } | null>(null);
   const [isMobileView, setIsMobileView] = useState(false);
   const [mobileSelectedDay, setMobileSelectedDay] = useState(todayDateStr);
+  const [desktopSelectedDay, setDesktopSelectedDay] = useState(todayDateStr);
 
   // Detect mobile viewport
   useEffect(() => {
@@ -219,7 +224,15 @@ export default function CalendarPage() {
   const weekStart = weekDays[0].fullDate;
   const weekEnd = weekDays[weekDays.length - 1].fullDate;
 
-  const selectedDateStr = isMobileView ? mobileSelectedDay : todayDateStr;
+  // Auto-select today if in current week, otherwise Monday of viewed week
+  useEffect(() => {
+    if (!desktopSelectedDay || !weekDays.some((d) => d.fullDate === desktopSelectedDay)) {
+      const todayInWeek = weekDays.find((d) => d.fullDate === todayDateStr);
+      setDesktopSelectedDay(todayInWeek ? todayDateStr : weekDays[0].fullDate);
+    }
+  }, [weekDays]);
+
+  const selectedDateStr = isMobileView ? mobileSelectedDay : desktopSelectedDay;
 
   // --- Data fetching ---
   const { data: weekAppointments, isUsingMockData, refetch: refetchAppointments } = useFetch(
@@ -296,11 +309,18 @@ export default function CalendarPage() {
   }, [totalGridHeight]);
 
   // --- Handlers ---
-  const handlePrevWeek = () => setWeekOffset((prev) => prev - 1);
-  const handleNextWeek = () => setWeekOffset((prev) => prev + 1);
+  const handlePrevWeek = () => {
+    setWeekOffset((prev) => prev - 1);
+    setDesktopSelectedDay("");
+  };
+  const handleNextWeek = () => {
+    setWeekOffset((prev) => prev + 1);
+    setDesktopSelectedDay("");
+  };
   const handleToday = () => {
     setWeekOffset(0);
     setMobileSelectedDay(todayDateStr);
+    setDesktopSelectedDay(todayDateStr);
   };
 
   const handleEmptySlotClick = (dayDate: string, hourValue: number, minuteValue: number, employeeId: number) => {
@@ -329,7 +349,7 @@ export default function CalendarPage() {
         {/* Time gutter */}
         <div className="shrink-0 w-16 border-r border-gray-100 bg-gray-50/50" style={{ paddingTop: 56 }}>
           {HOURS.map((hourValue) => (
-            <div key={hourValue} className="flex items-start justify-end pr-3 text-xs text-gray-400 font-medium" style={{ height: ROW_HEIGHT }}>
+            <div key={hourValue} className="flex items-start justify-end pr-3 text-xs text-gray-400 font-medium tabular-nums font-mono" style={{ height: ROW_HEIGHT }}>
               {formatHour(hourValue)}
             </div>
           ))}
@@ -339,7 +359,7 @@ export default function CalendarPage() {
         <div className="flex flex-1">
           {filteredEmployees.map((employee) => {
             // Get appointments for the selected day for this employee
-            const dayKey = isMobileView ? mobileSelectedDay : todayDateStr;
+            const dayKey = selectedDateStr;
             const dayAppointments = (appointmentsByDay.get(dayKey) || []).filter(
               (apt) => apt.employee_id === employee.id
             );
@@ -379,7 +399,7 @@ export default function CalendarPage() {
                   )}
 
                   {/* Now indicator */}
-                  {nowOffset !== null && dayKey === todayDateStr && (
+                  {nowOffset !== null && selectedDateStr === todayDateStr && (
                     <div className="absolute left-0 right-0 z-20 flex items-center" style={{ top: nowOffset }}>
                       <span className="h-2 w-2 -ml-1 rounded-full bg-red-500" />
                       <span className="flex-1 border-t-2 border-red-500" />
@@ -423,9 +443,7 @@ export default function CalendarPage() {
                                   {formatTimeShort(appointmentData.start_time)}
                                   {appointmentData.end_time ? ` - ${formatTimeShort(appointmentData.end_time)}` : ""}
                                 </span>
-                                <span className={`inline-block rounded-full px-1.5 py-0 text-[10px] font-medium leading-4 ${statusStyle(appointmentData.status)}`}>
-                                  {statusLabel(appointmentData.status)}
-                                </span>
+                                <StatusBadge status={appointmentData.status} size="xs" />
                               </div>
                             </>
                           )}
@@ -499,9 +517,7 @@ export default function CalendarPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold text-gray-900 truncate">{appointmentData.client_name}</p>
-                      <span className={`inline-block rounded-full px-1.5 py-0 text-[10px] font-medium leading-4 ${statusStyle(appointmentData.status)}`}>
-                        {statusLabel(appointmentData.status)}
-                      </span>
+                      <StatusBadge status={appointmentData.status} size="xs" />
                     </div>
                     <p className="text-xs text-gray-500 truncate">{appointmentData.service_name} &middot; {appointmentData.employee_name}</p>
                   </div>
@@ -518,9 +534,7 @@ export default function CalendarPage() {
   };
 
   // Count appointments for display
-  const currentDayAppointments = isMobileView
-    ? (appointmentsByDay.get(mobileSelectedDay) || [])
-    : (appointmentsByDay.get(todayDateStr) || []);
+  const currentDayAppointments = appointmentsByDay.get(selectedDateStr) || [];
 
   const weekMonthLabel = weekDays.length > 0
     ? new Date(weekDays[0].year, weekDays[0].month).toLocaleDateString("ro-RO", { month: "long", year: "numeric" })
@@ -549,7 +563,7 @@ export default function CalendarPage() {
             </span>
             <button
               onClick={() => setShowNewModal(true)}
-              className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-blue-light transition-colors"
+              className="rounded-lg bg-brand-orange px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-brand-blue-light transition-colors"
             >
               + Programare noua
             </button>
@@ -560,13 +574,13 @@ export default function CalendarPage() {
         <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* Week navigation */}
           <div className="flex items-center gap-2">
-            <button onClick={handlePrevWeek} className="rounded-lg border px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+            <button onClick={handlePrevWeek} className="rounded-lg border px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors min-h-[44px]">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
             </button>
-            <button onClick={handleToday} className="rounded-lg border px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+            <button onClick={handleToday} className="rounded-lg border px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 transition-colors min-h-[44px]">
               Astazi
             </button>
-            <button onClick={handleNextWeek} className="rounded-lg border px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors">
+            <button onClick={handleNextWeek} className="rounded-lg border px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50 transition-colors min-h-[44px]">
               <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
             </button>
           </div>
@@ -605,21 +619,23 @@ export default function CalendarPage() {
           <div className="mt-4 flex gap-1 overflow-x-auto rounded-xl bg-gray-100 p-1">
             {weekDays.map((day) => {
               const isToday = day.fullDate === todayDateStr;
+              const isSelected = day.fullDate === desktopSelectedDay;
               const dayAppointmentCount = (appointmentsByDay.get(day.fullDate) || []).length;
               return (
-                <div
+                <button
                   key={day.fullDate}
-                  className={`relative flex flex-col items-center rounded-lg px-4 py-2 text-sm font-medium min-w-[100px] ${
-                    isToday ? "bg-white text-gray-900 shadow-sm" : "text-gray-500"
+                  onClick={() => setDesktopSelectedDay(day.fullDate)}
+                  className={`relative flex flex-col items-center rounded-lg px-4 py-2 text-sm font-medium min-w-[100px] transition-all ${
+                    isSelected ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:bg-white/50"
                   }`}
                 >
                   <span className="text-xs uppercase tracking-wide">{day.label}</span>
-                  <span className={`mt-0.5 text-lg font-bold ${isToday ? "text-brand-blue" : ""}`}>{day.date}</span>
+                  <span className={`mt-0.5 text-lg font-bold ${isSelected ? "text-brand-blue" : isToday ? "text-blue-400" : ""}`}>{day.date}</span>
                   {dayAppointmentCount > 0 && (
                     <span className="text-[10px] text-gray-400">{dayAppointmentCount} prog.</span>
                   )}
                   {isToday && <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-blue-500" />}
-                </div>
+                </button>
               );
             })}
           </div>
@@ -668,22 +684,21 @@ export default function CalendarPage() {
       )}
 
       {/* Appointment Detail Modal */}
-      {showDetailModal && selectedAppointment && (
-        <AppointmentDetailModal
-          businessId={businessId!}
-          appointment={selectedAppointment}
-          employees={employeesData}
-          onClose={() => {
-            setShowDetailModal(false);
-            setSelectedAppointment(null);
-          }}
-          onUpdated={() => {
-            setShowDetailModal(false);
-            setSelectedAppointment(null);
-            refetchAppointments();
-          }}
-        />
-      )}
+      <AppointmentDetailModal
+        open={showDetailModal && !!selectedAppointment}
+        businessId={businessId!}
+        appointment={selectedAppointment}
+        employees={employeesData}
+        onClose={() => {
+          setShowDetailModal(false);
+          setSelectedAppointment(null);
+        }}
+        onUpdated={() => {
+          setShowDetailModal(false);
+          setSelectedAppointment(null);
+          refetchAppointments();
+        }}
+      />
     </div>
   );
 }
@@ -832,7 +847,7 @@ function NewAppointmentModal({
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4 rounded-t-2xl">
           <h3 className="text-lg font-bold text-gray-900">Programare noua</h3>
           <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -1079,14 +1094,16 @@ function NewAppointmentModal({
 // Appointment Detail Modal
 // ============================================================
 function AppointmentDetailModal({
+  open,
   businessId,
   appointment,
   employees,
   onClose,
   onUpdated,
 }: {
+  open: boolean;
   businessId: number;
-  appointment: Appointment;
+  appointment: Appointment | null;
   employees: EmployeeData[];
   onClose: () => void;
   onUpdated: () => void;
@@ -1098,10 +1115,11 @@ function AppointmentDetailModal({
   const [showPaymentSelect, setShowPaymentSelect] = useState(false);
   const [invoiceGenerated, setInvoiceGenerated] = useState(false);
 
-  const employeeData = employees.find((emp) => emp.id === appointment.employee_id);
+  const employeeData = employees.find((emp) => emp.id === appointment?.employee_id);
   const employeeColor = employeeData?.color || "#6b7280";
 
   const handleStatusChange = async (newStatus: string, paymentMethod?: string) => {
+    if (!appointment) return;
     setErrorMessage(null);
     setActionInProgress(true);
     try {
@@ -1116,6 +1134,7 @@ function AppointmentDetailModal({
   };
 
   const handleGenerateInvoice = async () => {
+    if (!appointment) return;
     setErrorMessage(null);
     setActionInProgress(true);
     try {
@@ -1131,6 +1150,7 @@ function AppointmentDetailModal({
   };
 
   const handleCancel = async () => {
+    if (!appointment) return;
     setErrorMessage(null);
     setActionInProgress(true);
     try {
@@ -1147,235 +1167,223 @@ function AppointmentDetailModal({
     }
   };
 
-  const isCancellable = !["cancelled", "completed", "no_show"].includes(appointment.status);
+  const isCancellable = appointment ? !["cancelled", "completed", "no_show"].includes(appointment.status) : false;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
-      <div className="relative w-full max-w-lg rounded-2xl bg-white shadow-2xl overflow-hidden" onClick={(clickEvent) => clickEvent.stopPropagation()}>
-        {/* Color bar */}
-        <div className="h-2" style={{ backgroundColor: employeeColor }} />
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b">
-          <div>
-            <h3 className="text-lg font-bold text-gray-900">Detalii programare</h3>
-            <p className="text-xs text-gray-400">#{appointment.id}</p>
-          </div>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600">
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
-          </button>
-        </div>
-
-        <div className="p-6 space-y-4">
-          {errorMessage && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</div>
-          )}
-
-          {/* Status badge */}
-          <div className="flex items-center gap-3">
-            <span className={`rounded-full px-3 py-1 text-sm font-medium ${statusStyle(appointment.status)}`}>
-              {statusLabel(appointment.status)}
-            </span>
-            {appointment.payment_status && (
-              <span className={`rounded-full px-3 py-1 text-xs font-medium ${
-                appointment.payment_status === "paid" ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"
-              }`}>
-                {appointment.payment_status === "paid" ? "Platit" : appointment.payment_status === "partial" ? "Partial" : "Neplatit"}
-              </span>
+    <SlideOver
+      open={open}
+      onClose={onClose}
+      title="Detalii programare"
+      subtitle={appointment ? `#${appointment.id}` : undefined}
+      colorBar={employeeColor}
+    >
+      {appointment && (
+        <>
+          <div className="p-6 space-y-4">
+            {errorMessage && (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">{errorMessage}</div>
             )}
-          </div>
 
-          {/* Generate invoice button for completed appointments */}
-          {appointment.status === "completed" && !invoiceGenerated && (
-            <div>
-              <button
-                onClick={handleGenerateInvoice}
-                disabled={actionInProgress}
-                className="rounded-lg border border-brand-blue bg-blue-50 px-3 py-1.5 text-xs font-medium text-brand-blue hover:bg-blue-100 disabled:opacity-50"
-              >
-                Genereaza factura
-              </button>
-            </div>
-          )}
-          {invoiceGenerated && (
-            <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs font-medium text-green-700">
-              Factura a fost generata cu succes
-            </div>
-          )}
-
-          {/* Info grid */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-gray-500 mb-0.5">Client</p>
-              <p className="text-sm font-medium text-gray-900">{appointment.client_name}</p>
-              {(appointment.client_phone || appointment.walk_in_phone) && (
-                <p className="text-xs text-gray-400">{appointment.client_phone || appointment.walk_in_phone}</p>
+            {/* Status badge */}
+            <div className="flex items-center gap-3">
+              <StatusBadge status={appointment.status} size="sm" showDot />
+              {appointment.payment_status && (
+                <StatusBadge status={appointment.payment_status} type="payment" size="sm" showDot />
               )}
             </div>
-            <div>
-              <p className="text-xs text-gray-500 mb-0.5">Specialist</p>
-              <div className="flex items-center gap-2">
-                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: employeeColor }} />
-                <p className="text-sm font-medium text-gray-900">{appointment.employee_name}</p>
-              </div>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 mb-0.5">Serviciu</p>
-              <p className="text-sm font-medium text-gray-900">{appointment.service_name}</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 mb-0.5">Ora</p>
-              <p className="text-sm font-medium text-gray-900">
-                {formatTimeShort(appointment.start_time)}
-                {appointment.end_time && ` - ${formatTimeShort(appointment.end_time)}`}
-              </p>
-              <p className="text-xs text-gray-400">{getDurationMinutes(appointment)} minute</p>
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 mb-0.5">Pret</p>
-              <p className="text-sm font-bold text-gray-900">
-                {appointment.final_price ?? appointment.price ?? "-"} {appointment.currency || "RON"}
-              </p>
-              {appointment.discount_percent ? (
-                <p className="text-xs text-green-600">-{appointment.discount_percent}% discount</p>
-              ) : null}
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 mb-0.5">Sursa</p>
-              <p className="text-sm text-gray-700 capitalize">{appointment.source || "manual"}</p>
-            </div>
-          </div>
 
-          {/* Notes */}
-          {(appointment.internal_notes || appointment.client_notes) && (
-            <div className="space-y-2 border-t pt-4">
-              {appointment.internal_notes && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Notite interne</p>
-                  <p className="text-sm text-gray-700">{appointment.internal_notes}</p>
-                </div>
-              )}
-              {appointment.client_notes && (
-                <div>
-                  <p className="text-xs font-medium text-gray-500">Notite client</p>
-                  <p className="text-sm text-gray-700">{appointment.client_notes}</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Cancel confirmation */}
-          {showCancelConfirm && (
-            <div className="border-t pt-4 space-y-3">
-              <p className="text-sm font-medium text-red-600">Sigur doriti anularea programarii?</p>
-              <textarea
-                value={cancelReason}
-                onChange={(changeEvent) => setCancelReason(changeEvent.target.value)}
-                placeholder="Motivul anularii (optional)"
-                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                rows={2}
-              />
-              <div className="flex gap-2">
+            {/* Generate invoice button for completed appointments */}
+            {appointment.status === "completed" && !invoiceGenerated && (
+              <div>
                 <button
-                  onClick={handleCancel}
+                  onClick={handleGenerateInvoice}
                   disabled={actionInProgress}
-                  className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                  className="rounded-lg border border-brand-blue bg-blue-50 px-3 py-1.5 text-xs font-medium text-brand-blue hover:bg-blue-100 disabled:opacity-50"
                 >
-                  {actionInProgress ? "Se anuleaza..." : "Confirma anularea"}
-                </button>
-                <button
-                  onClick={() => setShowCancelConfirm(false)}
-                  className="rounded-lg border px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
-                >
-                  Inapoi
+                  Genereaza factura
                 </button>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+            {invoiceGenerated && (
+              <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs font-medium text-green-700">
+                Factura a fost generata cu succes
+              </div>
+            )}
 
-        {/* Footer actions */}
-        {!showCancelConfirm && (
-          <div className="flex items-center justify-between border-t px-6 py-4 bg-gray-50">
-            <div className="flex gap-2">
-              {isCancellable && (
-                <button
-                  onClick={() => setShowCancelConfirm(true)}
-                  className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
-                >
-                  Anuleaza
-                </button>
-              )}
-            </div>
-            <div className="flex gap-2">
-              {appointment.status === "pending" && (
-                <button
-                  onClick={() => handleStatusChange("confirmed")}
-                  disabled={actionInProgress}
-                  className="rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
-                >
-                  Confirma
-                </button>
-              )}
-              {appointment.status === "confirmed" && (
-                <>
-                  <button
-                    onClick={() => handleStatusChange("in_progress")}
-                    disabled={actionInProgress}
-                    className="rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
-                  >
-                    Incepe
-                  </button>
-                  <button
-                    onClick={() => handleStatusChange("no_show")}
-                    disabled={actionInProgress}
-                    className="rounded-lg bg-orange-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-orange-600 disabled:opacity-50"
-                  >
-                    Neprezentare
-                  </button>
-                </>
-              )}
-              {appointment.status === "in_progress" && !showPaymentSelect && (
-                <button
-                  onClick={() => setShowPaymentSelect(true)}
-                  disabled={actionInProgress}
-                  className="rounded-lg bg-green-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
-                >
-                  Finalizeaza
-                </button>
-              )}
-              {showPaymentSelect && (
+            {/* Info grid */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Client</p>
+                <p className="text-sm font-medium text-gray-900">{appointment.client_name}</p>
+                {(appointment.client_phone || appointment.walk_in_phone) && (
+                  <p className="text-xs text-gray-400">{appointment.client_phone || appointment.walk_in_phone}</p>
+                )}
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Specialist</p>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500">Metoda plata:</span>
+                  <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: employeeColor }} />
+                  <p className="text-sm font-medium text-gray-900">{appointment.employee_name}</p>
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Serviciu</p>
+                <p className="text-sm font-medium text-gray-900">{appointment.service_name}</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Ora</p>
+                <p className="text-sm font-medium text-gray-900">
+                  {formatTimeShort(appointment.start_time)}
+                  {appointment.end_time && ` - ${formatTimeShort(appointment.end_time)}`}
+                </p>
+                <p className="text-xs text-gray-400">{getDurationMinutes(appointment)} minute</p>
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Pret</p>
+                <p className="text-sm font-bold text-gray-900">
+                  {appointment.final_price ?? appointment.price ?? "-"} {appointment.currency || "RON"}
+                </p>
+                {appointment.discount_percent ? (
+                  <p className="text-xs text-green-600">-{appointment.discount_percent}% discount</p>
+                ) : null}
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 mb-0.5">Sursa</p>
+                <p className="text-sm text-gray-700 capitalize">{appointment.source || "manual"}</p>
+              </div>
+            </div>
+
+            {/* Notes */}
+            {(appointment.internal_notes || appointment.client_notes) && (
+              <div className="space-y-2 border-t pt-4">
+                {appointment.internal_notes && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Notite interne</p>
+                    <p className="text-sm text-gray-700">{appointment.internal_notes}</p>
+                  </div>
+                )}
+                {appointment.client_notes && (
+                  <div>
+                    <p className="text-xs font-medium text-gray-500">Notite client</p>
+                    <p className="text-sm text-gray-700">{appointment.client_notes}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Cancel confirmation */}
+            {showCancelConfirm && (
+              <div className="border-t pt-4 space-y-3">
+                <p className="text-sm font-medium text-red-600">Sigur doriti anularea programarii?</p>
+                <textarea
+                  value={cancelReason}
+                  onChange={(changeEvent) => setCancelReason(changeEvent.target.value)}
+                  placeholder="Motivul anularii (optional)"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  rows={2}
+                />
+                <div className="flex gap-2">
                   <button
-                    onClick={() => handleStatusChange("completed", "cash")}
+                    onClick={handleCancel}
                     disabled={actionInProgress}
-                    className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                    className="rounded-lg bg-red-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
                   >
-                    Cash
+                    {actionInProgress ? "Se anuleaza..." : "Confirma anularea"}
                   </button>
                   <button
-                    onClick={() => handleStatusChange("completed", "card")}
-                    disabled={actionInProgress}
-                    className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
-                  >
-                    Card
-                  </button>
-                  <button
-                    onClick={() => setShowPaymentSelect(false)}
-                    className="rounded-lg border px-2 py-1.5 text-xs text-gray-500 hover:bg-gray-100"
+                    onClick={() => setShowCancelConfirm(false)}
+                    className="rounded-lg border px-4 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
                   >
                     Inapoi
                   </button>
                 </div>
-              )}
-              <button onClick={onClose} className="rounded-lg border px-4 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100">
-                Inchide
-              </button>
-            </div>
+              </div>
+            )}
           </div>
-        )}
-      </div>
-    </div>
+
+          {/* Footer actions */}
+          {!showCancelConfirm && (
+            <div className="flex items-center justify-between border-t px-6 py-4 bg-gray-50">
+              <div className="flex gap-2">
+                {isCancellable && (
+                  <button
+                    onClick={() => setShowCancelConfirm(true)}
+                    className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-50"
+                  >
+                    Anuleaza
+                  </button>
+                )}
+              </div>
+              <div className="flex gap-2">
+                {appointment.status === "pending" && (
+                  <button
+                    onClick={() => handleStatusChange("confirmed")}
+                    disabled={actionInProgress}
+                    className="rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    Confirma
+                  </button>
+                )}
+                {appointment.status === "confirmed" && (
+                  <>
+                    <button
+                      onClick={() => handleStatusChange("in_progress")}
+                      disabled={actionInProgress}
+                      className="rounded-lg bg-blue-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      Incepe
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange("no_show")}
+                      disabled={actionInProgress}
+                      className="rounded-lg bg-orange-500 px-4 py-1.5 text-xs font-medium text-white hover:bg-orange-600 disabled:opacity-50"
+                    >
+                      Neprezentare
+                    </button>
+                  </>
+                )}
+                {appointment.status === "in_progress" && !showPaymentSelect && (
+                  <button
+                    onClick={() => setShowPaymentSelect(true)}
+                    disabled={actionInProgress}
+                    className="rounded-lg bg-green-600 px-4 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                  >
+                    Finalizeaza
+                  </button>
+                )}
+                {showPaymentSelect && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Metoda plata:</span>
+                    <button
+                      onClick={() => handleStatusChange("completed", "cash")}
+                      disabled={actionInProgress}
+                      className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                    >
+                      Cash
+                    </button>
+                    <button
+                      onClick={() => handleStatusChange("completed", "card")}
+                      disabled={actionInProgress}
+                      className="rounded-lg bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-50"
+                    >
+                      Card
+                    </button>
+                    <button
+                      onClick={() => setShowPaymentSelect(false)}
+                      className="rounded-lg border px-2 py-1.5 text-xs text-gray-500 hover:bg-gray-100"
+                    >
+                      Inapoi
+                    </button>
+                  </div>
+                )}
+                <button onClick={onClose} className="rounded-lg border px-4 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-100">
+                  Inchide
+                </button>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </SlideOver>
   );
 }

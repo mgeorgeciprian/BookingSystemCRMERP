@@ -5,6 +5,7 @@ import { useAppStore } from "@/lib/store";
 import { employees as employeesApi, services as servicesApi } from "@/lib/api";
 import { useFetch } from "@/lib/hooks";
 import { MOCK_EMPLOYEES, MOCK_SERVICES } from "@/lib/mock-data";
+import { X } from "lucide-react";
 
 // ============================================================
 // Types
@@ -130,7 +131,7 @@ export default function EmployeesPage() {
             setEditingEmployee(null);
             setShowEmployeeModal(true);
           }}
-          className="rounded-lg bg-brand-blue px-4 py-2 text-sm font-medium text-white hover:bg-brand-blue-light transition-colors"
+          className="rounded-lg bg-brand-blue px-4 py-2 min-h-[44px] text-sm font-medium text-white hover:bg-brand-blue-light transition-colors"
         >
           + Angajat nou
         </button>
@@ -359,7 +360,7 @@ function EmployeeModal({
       <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl" onClick={(clickEvent) => clickEvent.stopPropagation()}>
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4 rounded-t-2xl">
           <h3 className="text-lg font-bold text-gray-900">{isEditing ? "Editeaza angajat" : "Angajat nou"}</h3>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="p-6 space-y-4">
@@ -531,7 +532,7 @@ function ScheduleEditorModal({
             <h3 className="text-lg font-bold text-gray-900">Program saptamanal</h3>
             <p className="text-sm text-gray-500">{employee.full_name}</p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="p-6 space-y-3">
@@ -575,7 +576,7 @@ function ScheduleEditorModal({
                         />
                         {intervals.length > 1 && (
                           <button onClick={() => removeInterval(key, intervalIndex)} className="text-red-400 hover:text-red-600 text-xs">
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg>
+                            <X className="h-4 w-4" />
                           </button>
                         )}
                       </div>
@@ -643,7 +644,7 @@ function ServiceAssignModal({
             <h3 className="text-lg font-bold text-gray-900">Asigneaza servicii</h3>
             <p className="text-sm text-gray-500">{employee.full_name}</p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="p-6 space-y-2">

@@ -1,5 +1,19 @@
 import type { Metadata } from "next";
+import { Inter, JetBrains_Mono } from "next/font/google";
+import VerticalThemeProvider from "@/components/VerticalThemeProvider";
 import "@/styles/globals.css";
+
+const inter = Inter({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-inter",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin", "latin-ext"],
+  variable: "--font-jetbrains",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "BookingCRM - Programari & CRM pentru afacerea ta",
@@ -13,8 +27,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="ro">
-      <body>{children}</body>
+    <html lang="ro" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+      <body>
+        <VerticalThemeProvider>{children}</VerticalThemeProvider>
+      </body>
     </html>
   );
 }

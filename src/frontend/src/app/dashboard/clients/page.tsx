@@ -5,6 +5,9 @@ import { useAppStore } from "@/lib/store";
 import { clients as clientsApi, appointments as appointmentsApi } from "@/lib/api";
 import { useFetch } from "@/lib/hooks";
 import { MOCK_CLIENTS, MOCK_APPOINTMENTS_TODAY } from "@/lib/mock-data";
+import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { Search, X } from "lucide-react";
 
 // ============================================================
 // Types
@@ -174,7 +177,7 @@ export default function ClientsPage() {
             setEditingClient(null);
             setShowClientModal(true);
           }}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-blue px-4 py-2.5 text-sm font-medium text-white shadow-sm hover:bg-brand-blue-light transition-colors"
+          className="inline-flex items-center gap-2 rounded-lg bg-brand-blue px-4 py-2.5 min-h-[44px] text-sm font-medium text-white shadow-sm hover:bg-brand-blue-light transition-colors"
         >
           + Client nou
         </button>
@@ -203,9 +206,7 @@ export default function ClientsPage() {
       {/* Search + filter chips */}
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <svg className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-          </svg>
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
             value={search}
@@ -495,7 +496,7 @@ function ClientModal({
       <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl" onClick={(clickEvent) => clickEvent.stopPropagation()}>
         <div className="sticky top-0 z-10 flex items-center justify-between border-b bg-white px-6 py-4 rounded-t-2xl">
           <h3 className="text-lg font-bold text-gray-900">{isEditing ? "Editeaza client" : "Client nou"}</h3>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="p-6 space-y-4">
@@ -622,7 +623,7 @@ function ClientDetailModal({
             <h3 className="text-lg font-bold text-gray-900">{client.full_name}</h3>
             <p className="text-sm text-gray-500">{client.phone} {client.email ? `| ${client.email}` : ""}</p>
           </div>
-          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button>
+          <button onClick={onClose} className="rounded-lg p-1 text-gray-400 hover:bg-gray-100"><X className="h-5 w-5" /></button>
         </div>
 
         <div className="p-6">
@@ -684,18 +685,7 @@ function ClientDetailModal({
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-medium text-gray-900">{appointment.final_price || appointment.price || 0} RON</p>
-                      <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                        appointment.status === "completed" ? "bg-green-100 text-green-700" :
-                        appointment.status === "cancelled" ? "bg-red-100 text-red-700" :
-                        appointment.status === "no_show" ? "bg-orange-100 text-orange-700" :
-                        "bg-gray-100 text-gray-600"
-                      }`}>
-                        {appointment.status === "completed" ? "Finalizat" :
-                         appointment.status === "cancelled" ? "Anulat" :
-                         appointment.status === "no_show" ? "Neprezentare" :
-                         appointment.status === "confirmed" ? "Confirmat" :
-                         appointment.status}
-                      </span>
+                      <StatusBadge status={appointment.status} type="appointment" />
                     </div>
                   </div>
                 ))}

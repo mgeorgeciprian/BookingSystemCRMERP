@@ -2,6 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { publicBooking } from "@/lib/api";
+import { Sun, Sunset, Moon, CheckCircle2, Clock, AlertTriangle, Check, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface BusinessProfile {
   id: number;
@@ -70,6 +72,54 @@ function getTomorrowString(): string {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
   return tomorrow.toISOString().split("T")[0];
+}
+
+function groupSlotsByPeriod(slots: AvailabilitySlot[]): { label: string; icon: any; slots: AvailabilitySlot[] }[] {
+  const morning: AvailabilitySlot[] = [];
+  const afternoon: AvailabilitySlot[] = [];
+  const evening: AvailabilitySlot[] = [];
+
+  slots.forEach((slot) => {
+    const hour = new Date(slot.start).getHours();
+    if (hour < 12) morning.push(slot);
+    else if (hour < 17) afternoon.push(slot);
+    else evening.push(slot);
+  });
+
+  const groups = [];
+  if (morning.length > 0) groups.push({ label: "Dimineata", icon: Sun, slots: morning });
+  if (afternoon.length > 0) groups.push({ label: "Dupa-amiaza", icon: Sunset, slots: afternoon });
+  if (evening.length > 0) groups.push({ label: "Seara", icon: Moon, slots: evening });
+  return groups;
+}
+
+function buildGoogleCalendarUrl(title: string, startISO: string, endISO: string, location: string, description: string): string {
+  const start = startISO.replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const end = endISO.replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  const params = new URLSearchParams({
+    action: "TEMPLATE",
+    text: title,
+    dates: `${start}/${end}`,
+    location,
+    details: description,
+  });
+  return `https://www.google.com/calendar/render?${params.toString()}`;
+}
+
+function buildICalContent(title: string, startISO: string, endISO: string, location: string, description: string): string {
+  const formatICalDate = (iso: string) => iso.replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+  return [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "BEGIN:VEVENT",
+    `DTSTART:${formatICalDate(startISO)}`,
+    `DTEND:${formatICalDate(endISO)}`,
+    `SUMMARY:${title}`,
+    `LOCATION:${location}`,
+    `DESCRIPTION:${description}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ].join("\r\n");
 }
 
 export default function PublicBookingPage({ params }: { params: { slug: string } }) {
@@ -272,7 +322,7 @@ export default function PublicBookingPage({ params }: { params: { slug: string }
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <p className="text-4xl">⚠️</p>
+          <AlertTriangle className="mx-auto h-10 w-10 text-amber-600" />
           <h2 className="mt-4 text-xl font-bold text-gray-900">Eroare</h2>
           <p className="mt-2 text-sm text-gray-500">{pageError}</p>
           <button
@@ -289,12 +339,15 @@ export default function PublicBookingPage({ params }: { params: { slug: string }
   const biz = business!;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" data-vertical={biz.vertical || "other"}>
       {/* Header */}
       <header className="bg-white border-b shadow-sm">
         <div className="mx-auto max-w-2xl px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-brand-blue text-lg font-bold text-white">
+            <div
+              className="flex h-11 w-11 items-center justify-center rounded-xl text-lg font-bold text-white"
+              style={{ backgroundColor: "var(--vertical-accent, #1d4ed8)" }}
+            >
               {biz.name.charAt(0)}
             </div>
             <div>
@@ -312,15 +365,17 @@ export default function PublicBookingPage({ params }: { params: { slug: string }
             <div key={label} className="flex items-center gap-1.5">
               <div className="flex flex-col items-center">
                 <div
-                  className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-colors ${
+                  className={cn(
+                    "flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-colors",
                     step > idx + 1
                       ? "bg-brand-green text-white"
                       : step === idx + 1
-                      ? "bg-brand-blue text-white shadow-lg shadow-blue-200"
+                      ? "text-white shadow-lg"
                       : "bg-gray-200 text-gray-400"
-                  }`}
+                  )}
+                  style={step === idx + 1 ? { backgroundColor: "var(--vertical-accent, #1d4ed8)" } : undefined}
                 >
-                  {step > idx + 1 ? "✓" : idx + 1}
+                  {step > idx + 1 ? <Check className="h-4 w-4" /> : idx + 1}
                 </div>
                 <span className="mt-1 text-[9px] text-gray-400">{label}</span>
               </div>
@@ -440,24 +495,38 @@ export default function PublicBookingPage({ params }: { params: { slug: string }
                 Nu sunt sloturi disponibile in aceasta zi
               </p>
             ) : (
-              <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
-                {slots.map((slot) => {
-                  const timeStr = formatTimeFromISO(slot.start);
+              <div className="space-y-6">
+                {groupSlotsByPeriod(slots).map((group) => {
+                  const IconComponent = group.icon;
                   return (
-                    <button
-                      key={slot.start}
-                      disabled={!slot.available}
-                      onClick={() => selectTime(slot)}
-                      className={`rounded-lg border px-3 py-2.5 text-sm font-medium transition-all ${
-                        !slot.available
-                          ? "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
-                          : selectedTime === timeStr
-                          ? "border-brand-blue bg-brand-blue text-white shadow-lg shadow-blue-200"
-                          : "border-gray-200 bg-white text-gray-700 hover:border-brand-blue hover:shadow-sm"
-                      }`}
-                    >
-                      {timeStr}
-                    </button>
+                    <div key={group.label}>
+                      <div className="mb-3 flex items-center gap-2 text-sm font-medium text-gray-600">
+                        <IconComponent className="h-4 w-4" />
+                        <span>{group.label}</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                        {group.slots.map((slot) => {
+                          const timeStr = formatTimeFromISO(slot.start);
+                          return (
+                            <button
+                              key={slot.start}
+                              disabled={!slot.available}
+                              onClick={() => selectTime(slot)}
+                              className={cn(
+                                "rounded-lg border px-3 py-2.5 text-sm font-medium transition-all min-h-[44px]",
+                                !slot.available
+                                  ? "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
+                                  : selectedTime === timeStr
+                                  ? "border-brand-blue bg-brand-blue text-white shadow-lg shadow-blue-200"
+                                  : "border-gray-200 bg-white text-gray-700 hover:border-brand-blue hover:shadow-sm"
+                              )}
+                            >
+                              {timeStr}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
                 })}
               </div>
@@ -546,7 +615,7 @@ export default function PublicBookingPage({ params }: { params: { slug: string }
             <button
               onClick={handleBook}
               disabled={!isBookFormValid || booking}
-              className="mt-6 w-full rounded-xl bg-brand-blue px-4 py-3.5 text-sm font-bold text-white shadow-lg shadow-blue-200 hover:bg-brand-blue-light disabled:opacity-40 disabled:shadow-none transition-all"
+              className="mt-6 w-full rounded-xl bg-brand-orange px-4 py-4 text-base min-h-[52px] font-bold text-white shadow-lg shadow-orange-200 hover:bg-brand-orange-light disabled:opacity-40 disabled:shadow-none transition-all"
             >
               {booking ? "Se trimite..." : "Confirma programarea"}
             </button>
@@ -559,8 +628,12 @@ export default function PublicBookingPage({ params }: { params: { slug: string }
         {/* Step 5: Confirmation */}
         {step === 5 && confirmation && (
           <div className="text-center py-8">
-            <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-4xl">
-              {confirmation.status === "confirmed" ? "✅" : "⏳"}
+            <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100">
+              {confirmation.status === "confirmed" ? (
+                <CheckCircle2 className="h-10 w-10 text-emerald-600" />
+              ) : (
+                <Clock className="h-10 w-10 text-amber-600" />
+              )}
             </div>
             <h2 className="mb-2 text-2xl font-bold text-brand-green">
               {confirmation.status === "confirmed" ? "Programare confirmata!" : "Programare in asteptare"}
@@ -598,6 +671,39 @@ export default function PublicBookingPage({ params }: { params: { slug: string }
                   </span>
                 </div>
               </div>
+            </div>
+
+            {/* Add to Calendar buttons */}
+            <div className="mx-auto mt-6 flex max-w-sm gap-3">
+              <a
+                href={buildGoogleCalendarUrl(
+                  `${selectedService?.name} - ${biz.name}`,
+                  confirmation.start_time,
+                  confirmation.end_time,
+                  [biz.address, biz.city].filter(Boolean).join(", "),
+                  `Programare: ${selectedService?.name} cu ${selectedEmployee?.display_name || selectedEmployee?.full_name}`
+                )}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:border-brand-blue hover:shadow-sm transition-all text-center"
+              >
+                Adauga in Google Calendar
+              </a>
+              <a
+                href={`data:text/calendar;charset=utf-8,${encodeURIComponent(
+                  buildICalContent(
+                    `${selectedService?.name} - ${biz.name}`,
+                    confirmation.start_time,
+                    confirmation.end_time,
+                    [biz.address, biz.city].filter(Boolean).join(", "),
+                    `Programare: ${selectedService?.name} cu ${selectedEmployee?.display_name || selectedEmployee?.full_name}`
+                  )
+                )}`}
+                download="programare.ics"
+                className="flex-1 rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm font-medium text-gray-700 hover:border-brand-blue hover:shadow-sm transition-all text-center"
+              >
+                Descarca .ics
+              </a>
             </div>
 
             {biz.phone && (
