@@ -273,6 +273,124 @@ export const MOCK_NOTIFICATIONS = [
 ];
 
 // ============================================================
+// REPORTS DATA
+// ============================================================
+export const MOCK_REPORTS = {
+  period: { months: 6, current_month: "Februarie", current_year: 2026 },
+  monthly_data: [
+    { month: "Sep", month_full: "Septembrie", year: 2025, total_appointments: 95, completed: 82, cancelled: 8, no_shows: 5, revenue: 12400 },
+    { month: "Oct", month_full: "Octombrie", year: 2025, total_appointments: 108, completed: 92, cancelled: 10, no_shows: 6, revenue: 14200 },
+    { month: "Nov", month_full: "Noiembrie", year: 2025, total_appointments: 115, completed: 100, cancelled: 9, no_shows: 6, revenue: 15800 },
+    { month: "Dec", month_full: "Decembrie", year: 2025, total_appointments: 130, completed: 115, cancelled: 8, no_shows: 7, revenue: 18100 },
+    { month: "Ian", month_full: "Ianuarie", year: 2026, total_appointments: 118, completed: 105, cancelled: 7, no_shows: 6, revenue: 16500 },
+    { month: "Feb", month_full: "Februarie", year: 2026, total_appointments: 112, completed: 98, cancelled: 10, no_shows: 4, revenue: 18750 },
+  ],
+  client_growth: [
+    { month: "Sep", year: 2025, new_clients: 12, total_clients: 68 },
+    { month: "Oct", year: 2025, new_clients: 15, total_clients: 83 },
+    { month: "Nov", year: 2025, new_clients: 10, total_clients: 93 },
+    { month: "Dec", year: 2025, new_clients: 18, total_clients: 111 },
+    { month: "Ian", year: 2026, new_clients: 14, total_clients: 125 },
+    { month: "Feb", year: 2026, new_clients: 8, total_clients: 133 },
+  ],
+  employee_performance: [
+    { id: 1, name: "Ana P.", color: "#8b5cf6", total_appointments: 38, completed: 34, cancelled: 2, no_shows: 2, revenue: 7250, completion_rate: 89, no_show_rate: 5 },
+    { id: 2, name: "Maria I.", color: "#ec4899", total_appointments: 32, completed: 28, cancelled: 3, no_shows: 1, revenue: 4200, completion_rate: 88, no_show_rate: 3 },
+    { id: 3, name: "Elena D.", color: "#f59e0b", total_appointments: 22, completed: 20, cancelled: 1, no_shows: 1, revenue: 3900, completion_rate: 91, no_show_rate: 5 },
+    { id: 4, name: "Andreea S.", color: "#06b6d4", total_appointments: 20, completed: 16, cancelled: 4, no_shows: 0, revenue: 3400, completion_rate: 80, no_show_rate: 0 },
+  ],
+  top_services: [
+    { id: 3, name: "Balayage", color: "#8b5cf6", appointment_count: 12, revenue: 5400, avg_price: 450 },
+    { id: 6, name: "Manichiura semi", color: "#ec4899", appointment_count: 35, revenue: 3500, avg_price: 100 },
+    { id: 9, name: "Tratament facial", color: "#f59e0b", appointment_count: 15, revenue: 2700, avg_price: 180 },
+    { id: 1, name: "Tuns dama", color: "#8b5cf6", appointment_count: 28, revenue: 2240, avg_price: 80 },
+    { id: 12, name: "Tuns barbati", color: "#06b6d4", appointment_count: 20, revenue: 1000, avg_price: 50 },
+    { id: 7, name: "Manichiura gel", color: "#ec4899", appointment_count: 10, revenue: 1500, avg_price: 150 },
+    { id: 2, name: "Vopsit radacini", color: "#8b5cf6", appointment_count: 8, revenue: 1360, avg_price: 170 },
+    { id: 8, name: "Pedichiura spa", color: "#ec4899", appointment_count: 8, revenue: 960, avg_price: 120 },
+  ],
+  peak_hours: (() => {
+    const days = ["Luni", "Marti", "Miercuri", "Joi", "Vineri", "Sambata", "Duminica"];
+    const grid: any[] = [];
+    const peakData: Record<string, number> = {
+      "0-9": 4, "0-10": 8, "0-11": 10, "0-12": 6, "0-13": 7, "0-14": 9, "0-15": 6, "0-16": 5, "0-17": 3,
+      "1-9": 3, "1-10": 7, "1-11": 9, "1-12": 5, "1-13": 6, "1-14": 8, "1-15": 7, "1-16": 4, "1-17": 2,
+      "2-9": 5, "2-10": 9, "2-11": 8, "2-12": 4, "2-13": 5, "2-14": 7, "2-15": 5, "2-16": 3, "2-17": 1,
+      "3-9": 4, "3-10": 10, "3-11": 12, "3-12": 7, "3-13": 8, "3-14": 10, "3-15": 8, "3-16": 6, "3-17": 5,
+      "4-9": 6, "4-10": 11, "4-11": 13, "4-12": 8, "4-13": 9, "4-14": 11, "4-15": 9, "4-16": 7, "4-17": 4,
+      "5-9": 0, "5-10": 5, "5-11": 6, "5-12": 4, "5-13": 3, "5-14": 2, "5-15": 0, "5-16": 0, "5-17": 0,
+      "6-9": 0, "6-10": 0, "6-11": 0, "6-12": 0, "6-13": 0, "6-14": 0, "6-15": 0, "6-16": 0, "6-17": 0,
+    };
+    for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+      for (let hour = 7; hour < 22; hour++) {
+        grid.push({
+          day: days[dayIndex],
+          day_index: dayIndex,
+          hour,
+          hour_label: `${hour.toString().padStart(2, "0")}:00`,
+          count: peakData[`${dayIndex}-${hour}`] || 0,
+        });
+      }
+    }
+    return grid;
+  })(),
+  daily_breakdown: (() => {
+    const result: any[] = [];
+    for (let i = 30; i >= 0; i--) {
+      const date = new Date(2026, 1, 21 - i);
+      const isWeekend = date.getDay() === 0 || date.getDay() === 6;
+      const baseAppointments = isWeekend ? (date.getDay() === 0 ? 0 : 4) : Math.floor(Math.random() * 5) + 8;
+      const completed = Math.floor(baseAppointments * 0.85);
+      const noShows = Math.random() < 0.15 ? 1 : 0;
+      result.push({
+        date: date.toISOString().split("T")[0],
+        total: baseAppointments,
+        completed,
+        no_shows: noShows,
+        revenue: completed * (100 + Math.floor(Math.random() * 80)),
+      });
+    }
+    return result;
+  })(),
+  no_show_analysis: {
+    total_scheduled: 112,
+    total_no_shows: 4,
+    overall_rate: 3.6,
+    by_source: [
+      { source: "online", total: 52, no_shows: 3, rate: 5.8 },
+      { source: "manual", total: 48, no_shows: 1, rate: 2.1 },
+      { source: "ical_block", total: 12, no_shows: 0, rate: 0 },
+    ],
+  },
+  booking_sources: [
+    { source: "online", count: 52 },
+    { source: "manual", count: 48 },
+    { source: "ical_block", count: 12 },
+  ],
+  payment_breakdown: [
+    { method: "card", count: 42, total: 8750 },
+    { method: "cash", count: 38, total: 6200 },
+    { method: "online", count: 12, total: 2800 },
+    { method: "transfer", count: 6, total: 1000 },
+  ],
+  invoicing: {
+    total: 45,
+    paid: 38,
+    draft: 4,
+    sent: 2,
+    overdue: 1,
+    total_amount: 18750,
+    paid_amount: 16200,
+    collection_rate: 86.4,
+  },
+  notifications: {
+    whatsapp: { sent: 52, delivered: 48, failed: 4, cost: 0.73 },
+    sms: { sent: 38, delivered: 36, failed: 2, cost: 2.28 },
+    viber: { sent: 145, delivered: 140, failed: 5, cost: 2.90 },
+  },
+};
+
+// ============================================================
 // DASHBOARD STATS
 // ============================================================
 export const MOCK_STATS = {

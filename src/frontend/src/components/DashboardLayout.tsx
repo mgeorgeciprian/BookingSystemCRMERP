@@ -23,6 +23,7 @@ import {
   Plus,
   Bell,
   MoreHorizontal,
+  BarChart3,
 } from "lucide-react";
 import { useState } from "react";
 
@@ -33,6 +34,7 @@ const NAV_ITEMS = [
   { label: "Servicii", href: "/dashboard/services", icon: Scissors },
   { label: "Echipa", href: "/dashboard/employees", icon: UserCog },
   { label: "Facturi", href: "/dashboard/invoices", icon: Receipt },
+  { label: "Rapoarte", href: "/dashboard/reports", icon: BarChart3 },
   { label: "Notificari", href: "/dashboard/notifications", icon: MessageSquare },
   { label: "Setari", href: "/dashboard/settings", icon: Settings },
 ];

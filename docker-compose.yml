@@ -41,7 +41,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       SECRET_KEY: dev-secret-change-in-production
       DEBUG: "true"
-      CORS_ORIGINS: '["http://localhost:3000","http://localhost:3001"]'
+      CORS_ORIGINS: '["http://localhost:3000","http://localhost:3001","http://localhost:3002"]'
     depends_on:
       db:
         condition: service_healthy
@@ -88,7 +88,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile.frontend
     ports:
-      - "3000:3000"
+      - "3001:3001"
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:5025
     depends_on:

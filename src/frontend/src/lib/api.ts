@@ -46,16 +46,16 @@ export async function apiFetch<T>(
 // --- Auth ---
 export const auth = {
   register: (data: { email: string; password: string; full_name: string; phone?: string }) =>
-    apiFetch<{ access_token: string; refresh_token: string }>("/api/v1/auth/register", {
+    apiFetch<{ access_token: string; refresh_token: string }>("/api/v1/auth/register/", {
       method: "POST",
       body: JSON.stringify(data),
     }),
   login: (data: { email: string; password: string }) =>
-    apiFetch<{ access_token: string; refresh_token: string }>("/api/v1/auth/login", {
+    apiFetch<{ access_token: string; refresh_token: string }>("/api/v1/auth/login/", {
       method: "POST",
       body: JSON.stringify(data),
     }),
-  me: () => apiFetch<any>("/api/v1/auth/me"),
+  me: () => apiFetch<any>("/api/v1/auth/me/"),
 };
 
 // --- Businesses ---
@@ -237,6 +237,12 @@ export const notifications = {
 export const dashboard = {
   stats: (bizId: number) =>
     apiFetch<any>(`/api/v1/businesses/${bizId}/dashboard/`),
+};
+
+// --- Reports ---
+export const reports = {
+  overview: (bizId: number, months: number = 6) =>
+    apiFetch<any>(`/api/v1/businesses/${bizId}/reports/overview?months=${months}`),
 };
 
 // --- iCal Sources ---

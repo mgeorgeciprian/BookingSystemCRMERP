@@ -3,7 +3,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import auth, businesses, services, employees, clients, appointments, public_booking, invoices, ical, notifications, dashboard
+from app.api.v1 import auth, businesses, services, employees, clients, appointments, public_booking, invoices, ical, notifications, dashboard, reports
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -44,6 +44,7 @@ app.include_router(invoices.router, prefix=f"{API_PREFIX}/businesses/{{business_
 app.include_router(ical.router, prefix=f"{API_PREFIX}/businesses/{{business_id}}/ical", tags=["iCal Sync"])
 app.include_router(notifications.router, prefix=f"{API_PREFIX}/businesses/{{business_id}}/notifications", tags=["Notifications"])
 app.include_router(dashboard.router, prefix=f"{API_PREFIX}/businesses/{{business_id}}/dashboard", tags=["Dashboard"])
+app.include_router(reports.router, prefix=f"{API_PREFIX}/businesses/{{business_id}}/reports", tags=["Reports"])
 
 # Public routes (no auth)
 app.include_router(public_booking.router, prefix=f"{API_PREFIX}/book", tags=["Public Booking"])
